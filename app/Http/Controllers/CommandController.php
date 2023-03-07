@@ -11,7 +11,7 @@ class CommandController extends Controller
     {
         $nbheaders = new \xgerhard\nbheaders\nbheaders;
         if (!$nbheaders->isNightbotRequest()) {
-            // return 'Only Nightbot requests allowed.';
+            return 'Only Nightbot requests allowed.';
         }
 
         if (!$request->has('q') || $request->get('q') == '') {
