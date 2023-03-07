@@ -14,5 +14,5 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092');
 });
