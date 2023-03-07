@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CommandController;
+use App\Http\Middleware\CommandMiddleware;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,4 +20,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('/command', [CommandController::class, 'run']);
+Route::get('/command', [CommandController::class, 'run'])->middleware(CommandMiddleware::class);

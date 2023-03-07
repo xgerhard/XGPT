@@ -3,12 +3,14 @@
 namespace App\src;
 
 use App\src\OpenAI;
+use App\src\NightbotAPI;
 use App\Models\Conversation;
 use App\Models\ConversationMessage;
 use Str;
 
 class XGPT
 {
+    private $nbheaders = null;
     private $conversation = null;
     private $messages = [
         [
@@ -17,9 +19,10 @@ class XGPT
         ]
     ];
 
-    public function __construct()
+    public function __construct($nbheaders)
     {
         $this->openai = new OpenAI;
+        $this->nbheaders = $nbheaders;
     }
 
     public function setConversionId($id)
@@ -49,8 +52,7 @@ class XGPT
     {
         $messages = [];
         $conversation = Conversation::with('messages')->find($this->conversation->id);
-        foreach($conversation->messages as $message)
-        {
+        foreach ($conversation->messages as $message) {
             $messages[] = [
                 'role' => $message->role,
                 'content' => $message->content
@@ -73,22 +75,55 @@ class XGPT
     {
         $response = $this->openai->getChatCompletion([
             'model' => 'gpt-3.5-turbo',
-            'max_tokens' => 40,
+            'max_tokens' => 60,
             'messages' => $this->getMessages()
         ]);
 
-        if(isset($response['choices'][0]['message']['content']))
-        {
-            // we need max 32 characters for username + info (200 max length)
+        // test data
+        // $response['choices'][0]['message']['content'] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla suscipit leo eget ante cursus dignissim. Donec sit amet metus eget felis mollis porta. Aliquam erat volutpat. Sed at vulputate enim, sit amet posuere massa. Morbi sodales laoreet odio, non iaculis magna faucibus dignissim. Pellentesque fringilla ante lorem, vel ultricies ante ullamcorper a.";
+
+        if (isset($response['choices'][0]['message']['content'])) {
+            
             $message = $response['choices'][0]['message']['content'];
             $message = trim(preg_replace('/\s+/', ' ', $message));
 
-            if (strlen($message) > 168) {
-                $message = substr($message, 0, 165) .'...';
+            $username = false;
+            if ($this->nbheaders->getUser()) {
+                $username = $this->nbheaders->getUser()->displayName;
             }
-            $this->storeMessage($message, 'assistant');
 
-            return $message .' #'. $this->conversation->id;
+            $messageLength = 200;
+            if ($username) {
+                $messageLength -= strlen($username) + 2;
+            }
+
+            if (strlen($message) > $messageLength) {
+                if ($this->nbheaders->getResponseUrl()) {
+                    $secondMessageLength = 195;
+                    if (strlen($message) > ($messageLength - 7 + $secondMessageLength)) {
+                        $secondMessage = substr($message, $messageLength - 7, ($messageLength - 7 + $secondMessageLength) - 7) .'...';
+                        $storeMessage = substr($message, 0, ($messageLength - 7 + $secondMessageLength) - 7);
+                    } else {
+                        $secondMessage =  substr($message, $messageLength - 7, ($messageLength - 7 + $secondMessageLength) - 4);
+                        $storeMessage = substr($message, 0, ($messageLength - 7 + $secondMessageLength) - 4);
+                    }
+
+                    $this->storeMessage($storeMessage, 'assistant');
+                    $secondMessage .= ' #'. $this->conversation->id;
+
+                    session([$this->conversation->id => [
+                        'responseUrl' => $this->nbheaders->getResponseUrl(),
+                        'message' => $secondMessage
+                    ]]);
+                }
+                $message = substr($message, 0, $messageLength - 7) .'...';
+            } else {
+                $message = substr($message, 0, $messageLength - 4);
+                $this->storeMessage($message, 'assistant');
+            }
+
+            $message = ($username ? $username .': ' : '') . $message .' #'. $this->conversation->id;
+            return $message;
         }
 
         return 'Error, unexpected response..';
@@ -99,8 +134,7 @@ class XGPT
         $length = 3;
         $characters = '0123456789abcdefghijklmnopqrstuvwxyz';
 
-        do
-        {
+        do {
             $string = '';
             for ($i = 0; $i < $length; $i++) {
                 $index = rand(0, strlen($characters) - 1);
