@@ -75,7 +75,7 @@ class XGPT
     {
         $response = $this->openai->getChatCompletion([
             'model' => 'gpt-3.5-turbo',
-            'max_tokens' => 60,
+            //'max_tokens' => 100,
             'messages' => $this->getMessages()
         ]);
 
@@ -92,14 +92,14 @@ class XGPT
                 $username = $this->nbheaders->getUser()->displayName;
             }
 
-            $messageLength = 200;
+            $messageLength = 399;
             if ($username) {
                 $messageLength -= strlen($username) + 2;
             }
 
             if (strlen($message) > $messageLength) {
                 if ($this->nbheaders->getResponseUrl()) {
-                    $secondMessageLength = 195;
+                    $secondMessageLength = 394;
                     if (strlen($message) > ($messageLength - 7 + $secondMessageLength)) {
                         $secondMessage = substr($message, $messageLength - 7, ($messageLength - 7 + $secondMessageLength) - 7) .'...';
                         $storeMessage = substr($message, 0, ($messageLength - 7 + $secondMessageLength) - 7);
