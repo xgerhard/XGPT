@@ -27,11 +27,10 @@ class XGPT
 
     public function setConversionId($id)
     {
-        $conversation = Conversation::firstOrCreate([
-            'id' => $id
-        ]);
-
-        $this->conversation = $conversation;
+        $conversation = Conversation::find($id);
+        if ($conversation) {
+            $this->conversation = $conversation;
+        }
     }
 
     public function setMessage($message, $role = 'user')
@@ -73,11 +72,19 @@ class XGPT
 
     public function getResponse()
     {
-        $response = $this->openai->getChatCompletion([
-            'model' => 'gpt-3.5-turbo',
-            //'max_tokens' => 100,
-            'messages' => $this->getMessages()
-        ]);
+        $username = false;
+        if ($this->nbheaders->getUser()) {
+            $username = $this->nbheaders->getUser()->displayName;
+        }
+
+        try {
+            $response = $this->openai->getChatCompletion([
+                'model' => 'gpt-3.5-turbo',
+                'messages' => $this->getMessages()
+            ]);
+        } catch (\Illuminate\Http\Client\ConnectionException) {
+            return ($username ? $username .': ' : '') . ' ChatGPT took to long to respond. Please try again in a bit. ResidentSleeper';
+        }
 
         // test data
         // $response['choices'][0]['message']['content'] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla suscipit leo eget ante cursus dignissim. Donec sit amet metus eget felis mollis porta. Aliquam erat volutpat. Sed at vulputate enim, sit amet posuere massa. Morbi sodales laoreet odio, non iaculis magna faucibus dignissim. Pellentesque fringilla ante lorem, vel ultricies ante ullamcorper a.";
@@ -86,11 +93,6 @@ class XGPT
             
             $message = $response['choices'][0]['message']['content'];
             $message = trim(preg_replace('/\s+/', ' ', $message));
-
-            $username = false;
-            if ($this->nbheaders->getUser()) {
-                $username = $this->nbheaders->getUser()->displayName;
-            }
 
             $messageLength = 399;
             if ($username) {
@@ -134,7 +136,7 @@ class XGPT
         $length = 3;
         $characters = '0123456789abcdefghijklmnopqrstuvwxyz';
 
-        do {
+        while (true) {
             $string = '';
             for ($i = 0; $i < $length; $i++) {
                 $index = rand(0, strlen($characters) - 1);
@@ -142,8 +144,10 @@ class XGPT
             }
 
             $conversation = Conversation::find($string);
+            if (!$conversation) {
+                break;
+            }
         }
-        while ($conversation);
 
         $this->conversation = Conversation::create([
             'id' => $string
