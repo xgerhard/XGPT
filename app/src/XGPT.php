@@ -15,7 +15,7 @@ class XGPT
     private $messages = [
         [
             'role' => 'system',
-            'content' => 'You are a helpful assistant.'
+            'content' => 'You are a helpful assistant for a Twitch chat. Please answer in 250 characters or less.'
         ]
     ];
 
@@ -44,7 +44,10 @@ class XGPT
 
     public function getMessages()
     {
-        return array_merge($this->messages, $this->getConversationMessages());
+        return array_merge($this->messages, $this->getConversationMessages(), [[
+            'role' => 'user',
+            'content' => 'Answer in 250 characters or less.'
+        ]]);
     }
 
     public function getConversationMessages()
@@ -80,6 +83,7 @@ class XGPT
         try {
             $response = $this->openai->getChatCompletion([
                 'model' => 'gpt-3.5-turbo',
+                'max_tokens' => 80,
                 'messages' => $this->getMessages()
             ]);
         } catch (\Illuminate\Http\Client\ConnectionException) {
