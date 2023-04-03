@@ -7,6 +7,7 @@ use App\src\NightbotAPI;
 use App\Models\Conversation;
 use App\Models\ConversationMessage;
 use Str;
+use Log;
 
 class XGPT
 {
@@ -130,6 +131,8 @@ class XGPT
 
             $message = ($username ? $username .': ' : '') . $message .' #'. $this->conversation->id;
             return $message;
+        } else {
+            Log::error(print_r($response, true));
         }
 
         return 'Error, unexpected response..';
