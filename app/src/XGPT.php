@@ -91,9 +91,6 @@ class XGPT
             return ($username ? $username .': ' : '') . ' ChatGPT took to long to respond. Please try again in a bit. ResidentSleeper';
         }
 
-        // test data
-        // $response['choices'][0]['message']['content'] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla suscipit leo eget ante cursus dignissim. Donec sit amet metus eget felis mollis porta. Aliquam erat volutpat. Sed at vulputate enim, sit amet posuere massa. Morbi sodales laoreet odio, non iaculis magna faucibus dignissim. Pellentesque fringilla ante lorem, vel ultricies ante ullamcorper a.";
-
         if (isset($response['choices'][0]['message']['content'])) {
             
             $message = $response['choices'][0]['message']['content'];
