@@ -13,17 +13,17 @@ class XGPT
 {
     private $nbheaders = null;
     private $conversation = null;
-    private $messages = [
-        [
-            'role' => 'system',
-            'content' => 'You are a helpful assistant for a Twitch chat. Please answer in 250 characters or less.'
-        ]
-    ];
+    private $messages = [];
 
     public function __construct($nbheaders)
     {
         $this->openai = new OpenAI;
         $this->nbheaders = $nbheaders;
+
+        $this->messages[] = [
+            'role' => 'system',
+            'content' => 'You are a helpful assistant for a '. $this->nbheaders->getProvider() .' chat.'
+        ];
     }
 
     public function setConversionId($id)
