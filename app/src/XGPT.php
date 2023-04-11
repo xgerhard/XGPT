@@ -4,6 +4,7 @@ namespace App\src;
 
 use App\src\OpenAI;
 use App\src\NightbotAPI;
+use App\src\Badges;
 use App\Models\Conversation;
 use App\Models\ConversationMessage;
 use Str;
@@ -78,7 +79,13 @@ class XGPT
     {
         $username = false;
         if ($this->nbheaders->getUser()) {
-            $username = $this->nbheaders->getUser()->displayName;
+            $user = $this->nbheaders->getUser();
+            $username = $user->displayName;
+
+            $badge = Badges::getBadge($user->provider, $user->providerId);
+            if ($badge) {
+                $username = '['. $badge .'] '. $username;
+            }
         }
 
         try {
