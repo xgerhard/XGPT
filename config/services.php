@@ -31,4 +31,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'nightbot' => [
+        'client_id' => env('NIGHTBOT_CLIENT_ID'),
+        'client_secret' => env('NIGHTBOT_CLIENT_SECRET'),
+        'redirect' => getenv('APP_URL') . '/login/nightbot/callback'
+    ]
 ];
