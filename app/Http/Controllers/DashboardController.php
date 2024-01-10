@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Contracts\Encryption\DecryptException;
 use App\src\NightbotAPI;
+use App\src\SettingsHandler;
 use Log;
 use Exception;
 use Session;
@@ -19,6 +22,12 @@ class DashboardController extends Controller
 
     public function index()
     {
+        // Set default settings for new users
+        if (!Auth::user()->settings()->exists()) {
+            $this->setDefaultSettings();
+        }
+
+        // Logout if no Nightbot session is found
         $token = session('nightbot_api_token');
         if (!$token) {
             return redirect('/logout');
@@ -70,6 +79,7 @@ class DashboardController extends Controller
                 $user->settings()->updateOrCreate([
                     'user_id' => $user->id
                 ], [
+                    'api_key' => Crypt::encryptString($request->post('api_key')),
                     'start_instructions' => $request->post('start_instructions'),
                     'end_instructions' => $request->post('end_instructions'),
                     'show_conversation_id' => $request->has('show_conversation_id'),
@@ -83,6 +93,14 @@ class DashboardController extends Controller
         }
 
         return redirect('/dashboard');
+    }
+
+    private function setDefaultSettings()
+    {
+        $user = Auth::user();
+        $settings = new SettingsHandler;
+        $settings->setDefaultSettings($user);
+        Auth::setUser($user->fresh());
     }
 
     private function installNightbotCommand($commandCode)
