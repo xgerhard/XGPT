@@ -144,15 +144,13 @@ class XGPT
 
     public function generateConversion()
     {
-        $length = 3;
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyz';
-
         while (true) {
-            $string = '';
-            for ($i = 0; $i < $length; $i++) {
-                $index = rand(0, strlen($characters) - 1);
-                $string .= $characters[$index];
-            }
+            $string = generate_random_string(
+                3, // length
+                true, // letters
+                true, // numbers
+                true // hide similar characters
+            );
 
             $conversation = Conversation::find($string);
             if (!$conversation) {
