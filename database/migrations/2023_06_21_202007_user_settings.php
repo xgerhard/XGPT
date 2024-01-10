@@ -15,8 +15,8 @@ return new class extends Migration
         Schema::create('user_settings', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(User::class);
-            $table->text('start_instructions')->nullable()->default('');
-            $table->text('end_instructions')->nullable()->default('');
+            $table->text('start_instructions')->nullable();
+            $table->text('end_instructions')->nullable();
             $table->tinyInteger('show_conversation_id')->default(1);
             $table->tinyInteger('mention_user')->default(1);
             $table->tinyInteger('show_sponsor_heart')->default(1);
