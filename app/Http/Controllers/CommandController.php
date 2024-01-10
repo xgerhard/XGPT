@@ -10,6 +10,26 @@ class CommandController extends Controller
     public function run(Request $request)
     {
         $nbheaders = new \xgerhard\nbheaders\nbheaders;
+
+        // If APP_DEBUG is set to true in your .env, you can set a test user & channel here, so the script works from the browser.
+        // This will manually set the request headers that are normally send by Nightbot urlFetch: https://docs.nightbot.tv/commands/variables/urlfetch
+        if(env('APP_DEBUG'))
+        {
+            $nbheaders->setUser([
+                'name' => 'xgerhard',
+                'displayName' => 'xgerhard',
+                'provider' => 'twitch',
+                'providerId' => '12345678',
+                'userLevel' => 'owner'
+            ]);
+            $nbheaders->setChannel([
+                'name' => 'xgerhard',
+                'displayName' => 'xgerhard',
+                'provider' => 'twitch',
+                'providerId' => '12345678'
+            ]);
+        }
+
         if (!$nbheaders->isNightbotRequest()) {
             return 'Only Nightbot requests allowed.';
         }
