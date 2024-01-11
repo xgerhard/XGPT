@@ -73,12 +73,22 @@
 		    <div class="container">
 			    <article class="docs-article" id="section-1">
 				    <header class="docs-header">
-					    <h1 class="docs-heading">XGPT <span class="docs-time">Last updated: 2023-05-04</span></h1>
+					    <h1 class="docs-heading">XGPT <span class="docs-time">Last updated: 11 Jan 2024</span></h1>
                         <h2>Use Nightbot as AI chatbot powered by ChatGPT</h2>
 					    <section class="docs-intro">
                             <p>Spice up your chat by adding an AI chatbot to your stream and make Nightbot your stream assistant. You can use this bot to get answers to your questions, help you create a stream title or raid message, or maybe just for a fun chat. This app is powered by <a href="https://openai.com/blog/chatgpt" target="blank">OpenAI ChatGPT</a>.</p>
 						</section><!--//docs-intro-->
 				    </header>
+					<div class="callout-block callout-block-info">
+						<div class="content">
+							<h4 class="callout-title">
+								<span class="callout-icon-holder me-1">
+									<i class="fa fa-info-circle"></i>
+								</span><!--//icon-holder-->
+								<a href="#section-3">Don't feel like reading? Click me to skip to installation.</a>
+							</h4>
+						</div><!--//content-->
+					</div><!--//callout-block-->
 				    <section class="docs-section" id="item-1-1">
 						<h2 class="section-heading">Examples</h2>
 						<p>A couple examples, need help, info, or a fun chat?</p>
@@ -137,9 +147,7 @@
 						<p>Do you, or want to, sponsor this app? Great! Head over to: <a href="https://github.com/sponsors/xgerhard" target="blank">github.com/sponsors/xgerhard</a>.</p>
                         <p>Sponsors get a heart ❤️ in front of their name when using the app as recognition of their generosity.</p>
                         <a href="assets/images/sponsord0376151b3df41e34cdc7fcdfcbfcb5b.png"><img class="figure-img img-fluid shadow rounded" src="assets/images/sponsord0376151b3df41e34cdc7fcdfcbfcb5b.png" alt="Sponsors heart"/></a>
-                        <h3>Coming soon!</h3>
-                        <p>A dashboard with customizable settings for your personal AI chatbot. Give the bot more and detailed instructions for just your stream. Provider attional information about you or your stream, so the bot can answer more questions. Want the bot to speak in a certain language, a certain way, include emojis, be more funny? Endless opportunities and alot of fun!</p>
-					</section><!--//section-->
+                    </section><!--//section-->
 			    </article><!--//docs-article-->
 			    
 			    
@@ -153,6 +161,8 @@
 				     <section class="docs-section" id="item-3-1">
 						<h2 class="section-heading">Automatic</h2>
 						<p>Sign in with Nightbot and we will handle the installation for you!</p>
+						<p>When you sign in to our dashboard you will be able to customize settings for your personal AI chatbot. Give the bot more and detailed instructions for just your stream. Provide attional information about you or your stream, so the bot can answer more specific questions. Want the bot to speak in a certain language, a certain way, include emojis, be more funny? Endless opportunities and alot of fun!</p>
+						<p>You'll also be able to use your own OpenAI API key to avoid monthly limits, which we highly recommend!</p>
                         <p><a href="https://xgpt.gerhard.dev/dashboard" class="btn btn-secondary">Sign in with Nightbot</a></p>
 					</section><!--//section-->
 					
