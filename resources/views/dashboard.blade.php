@@ -60,7 +60,7 @@
                     <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-3"><span class="theme-icon-holder me-2"><i class="fa fa-gear"></i></span>Settings</a></li>
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-3-0">OpenAI API key</a></li>
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-3-1">AI instructions</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-3-2">Final AI instructions</a></li>
+                    <!--<li class="nav-item"><a class="nav-link scrollto" href="#item-3-2">Final AI instructions</a></li>-->
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-3-3">Conversation ID</a></li>
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-3-4">Mention user</a></li>
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-3-5">Sponsor heart</a></li>
@@ -229,7 +229,7 @@
                                 <textarea class="form-control" id="start_instructions" name="start_instructions" style="height:100px" maxlength="500">@if( auth()->user()->settings ){{ auth()->user()->settings->start_instructions}}@endif</textarea>
                             </div>
                         </section><!--//section-->
-                        <section class="docs-section" id="item-3-2">
+                        <section class="docs-section" id="item-3-2" style="display:none;">
                             <h2 class="section-heading">Final AI instructions</h2>
                             <p>This is the final instruction we send to the AI, the order is: AI instructions -> the viewer message -> final AI instructions. Currently we use this to ask to reply within a certain amount of characters (for Twitch 250, for Youtube 150). You can play around with this number, or maybe give instruction to reply in a certain language. This instruction just like the first one doesn't have to be in English, can be in your desired language. Or you could leave this settings empty.<br/>A few examples:
                                 <ul>
