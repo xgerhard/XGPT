@@ -105,7 +105,7 @@
                             <div class="content">
                                 <h4 class="callout-title">
                                     <span class="callout-icon-holder">
-                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <i class="fa fa-exclamation-triangle"></i>
                                     </span><!--//icon-holder-->
                                     Woops!
                                 </h4>
@@ -138,7 +138,7 @@
                             <div class="content">
                                 <h4 class="callout-title">
                                     <span class="callout-icon-holder">
-                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <i class="fa fa-exclamation-triangle"></i>
                                     </span><!--//icon-holder-->
                                     Woops!
                                 </h4>
