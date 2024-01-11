@@ -23,15 +23,6 @@ return new class extends Migration
             $table->tinyInteger('show_sponsor_heart')->default(1);
             $table->timestamps();
         });
-
-        DB::table('user_settings')->insert([
-            'user_id' => 1,
-            'start_instructions' => 'x',
-            'end_instructions' => 'y',
-            'show_conversation_id' => 1,
-            'mention_user' => 1,
-            'show_sponsor_heart' => 1
-        ]);
     }
 
     /**
