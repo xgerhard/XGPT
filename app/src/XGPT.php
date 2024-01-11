@@ -7,6 +7,10 @@ use App\src\NightbotAPI;
 use App\src\Badges;
 use App\Models\Conversation;
 use App\Models\ConversationMessage;
+use App\src\SettingsHandler;
+use App\Exceptions\InvalidTokenException;
+use App\Exceptions\InvalidApiKeyException;
+use App\Exceptions\RateLimitException;
 use Str;
 use Log;
 
@@ -18,12 +22,31 @@ class XGPT
 
     public function __construct($nbheaders)
     {
-        $this->openai = new OpenAI;
         $this->nbheaders = $nbheaders;
 
+        // Fetch settings for channel
+        $settings = new SettingsHandler;
+        $channel = $settings->getUserWithSettings(
+            $nbheaders->getChannel()->provider, 
+            $nbheaders->getChannel()->providerId
+        );
+        $this->settings = $channel->settings;
+
+        // If API key is set, make sure the tokens match
+        if (
+            $this->settings->api_key &&
+            (!request()->has('token') || request()->get('token') != $channel->token)
+        ) {
+            throw new InvalidTokenException();
+        }
+
+        // Init OpenAI API
+        $this->openai = new OpenAI($this->settings->api_key);
+
+        // AI start instructions
         $this->messages[] = [
             'role' => 'system',
-            'content' => 'You are a helpful assistant for a '. $this->nbheaders->getProvider() .' chat.'
+            'content' => $this->settings->start_instructions
         ];
     }
 
@@ -48,7 +71,7 @@ class XGPT
     {
         return array_merge($this->messages, $this->getConversationMessages(), [[
             'role' => 'user',
-            'content' => 'Answer in 250 characters or less.'
+            'content' => $this->settings->end_instructions
         ]]);
     }
 
@@ -88,71 +111,107 @@ class XGPT
             }
         }
 
-        try {
-            $response = $this->openai->getChatCompletion([
-                'model' => 'gpt-3.5-turbo',
-                'max_tokens' => 80,
-                'messages' => $this->getMessages()
-            ]);
-        } catch (\Illuminate\Http\Client\ConnectionException) {
-            return ($username ? $username .': ' : '') . ' ChatGPT took to long to respond. Please try again in a bit. ResidentSleeper';
-        }
+        $response = $this->openai->getChatCompletion([
+            'model' => 'gpt-3.5-turbo',
+            'max_tokens' => 80,
+            'messages' => $this->getMessages()
+        ]);
 
         if (isset($response['choices'][0]['message']['content'])) {
             
             $message = $response['choices'][0]['message']['content'];
             $message = trim(preg_replace('/\s+/', ' ', $message));
+            $conversionIdLength = $this->settings->show_conversation_id ? 4 : 0;
 
             $messageLength = 399;
-            if ($username) {
+            if ($username && $this->settings->mention_user) {
                 $messageLength -= strlen($username) + 2;
             }
 
+            // If the response message is too long, we can send a second message.
             if (strlen($message) > $messageLength) {
                 if ($this->nbheaders->getResponseUrl()) {
-                    $secondMessageLength = 394;
-                    if (strlen($message) > ($messageLength - 7 + $secondMessageLength)) {
-                        $secondMessage = substr($message, $messageLength - 7, ($messageLength - 7 + $secondMessageLength) - 7) .'...';
-                        $storeMessage = substr($message, 0, ($messageLength - 7 + $secondMessageLength) - 7);
+                    $secondMessageLength = 399;
+
+                    // These calculations made my head spin..
+                    // $secondMessageStartPosition (end of first message)= First message max characters, minus conversionId length, minus 3 (...).
+                    $secondMessageStartPosition = $messageLength - $conversionIdLength - 3;
+                    // $secondMessageEndPosition = $secondMessageStartPosition + Second message max characters, minus conversionId length.
+                    $secondMessageEndPosition = $secondMessageStartPosition + $secondMessageLength - $conversionIdLength;
+
+                    // If even the second message if too long, we cut it short and add ... at the end.
+                    if (strlen($message) > ($secondMessageStartPosition + $secondMessageLength)) {
+                        $secondMessage = substr($message, $secondMessageStartPosition, $secondMessageEndPosition - 3) .'...';
+                        $storeMessage = substr($message, 0, $secondMessageEndPosition - 3);
                     } else {
-                        $secondMessage =  substr($message, $messageLength - 7, ($messageLength - 7 + $secondMessageLength) - 4);
-                        $storeMessage = substr($message, 0, ($messageLength - 7 + $secondMessageLength) - 4);
+                        $secondMessage =  substr($message, $secondMessageStartPosition, $secondMessageEndPosition);
+                        $storeMessage = substr($message, 0, $secondMessageEndPosition);
                     }
 
                     $this->storeMessage($storeMessage, 'assistant');
-                    $secondMessage .= ' #'. $this->conversation->id;
+                    if ($this->settings->show_conversation_id) {
+                        $secondMessage .= ' #'. $this->conversation->id;
+                    }
 
+                    session(['conversion_id' => $this->conversation->id]);
                     session([$this->conversation->id => [
                         'responseUrl' => $this->nbheaders->getResponseUrl(),
                         'message' => $secondMessage
                     ]]);
                 }
-                $message = substr($message, 0, $messageLength - 7) .'...';
+                $message = substr($message, 0, $secondMessageStartPosition) .'...';
             } else {
-                $message = substr($message, 0, $messageLength - 4);
+                $message = substr($message, 0, $messageLength - $conversionIdLength);
                 $this->storeMessage($message, 'assistant');
             }
 
-            $message = ($username ? $username .': ' : '') . $message .' #'. $this->conversation->id;
+            if ($this->settings->mention_user) {
+                $message = ($username ? $username .': ' : '') . $message;
+            }
+
+            if ($this->settings->show_conversation_id) {
+                $message = $message .' #'. $this->conversation->id;
+            }
+
             return $message;
         } else {
-            Log::error(print_r($response, true));
-        }
+            $message = 'Error, unexpected response..';
+            if (isset($response['error']['type'])) {
+                switch ($response['error']['type']) {
+                    case 'insufficient_quota':
+                        throw new RateLimitException();
+                    break;
 
-        return 'Error, unexpected response..';
+                    case 'invalid_request_error':
+                        if ($response['error']['code'] == 'invalid_api_key') {
+                            // Log for a bit, to help channels with the setup
+                            Log::error(print_r([
+                                'name' => 'Invalid API key',
+                                'provider' => $this->nbheaders->getProvider(),
+                                'channel' => $this->nbheaders->getChannel()->name
+                            ], true));
+                            throw new InvalidApiKeyException();
+                        }
+                    break;
+
+                    default:
+                        Log::error(print_r($response, true));
+                }
+            }
+            $message = ($username ? $username .': ' : '') .'Error: '.  $message;
+            return $message;
+        }
     }
 
     public function generateConversion()
     {
-        $length = 3;
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyz';
-
         while (true) {
-            $string = '';
-            for ($i = 0; $i < $length; $i++) {
-                $index = rand(0, strlen($characters) - 1);
-                $string .= $characters[$index];
-            }
+            $string = generate_random_string(
+                3, // length
+                true, // letters
+                true, // numbers
+                true // hide similar characters
+            );
 
             $conversation = Conversation::find($string);
             if (!$conversation) {
