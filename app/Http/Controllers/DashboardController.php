@@ -39,16 +39,25 @@ class DashboardController extends Controller
         $commands = $nightbotApi->getCustomCommands();
         $installedCommands = [];
 
+        $commandNeedsToken = false;
         if (isset($commands['commands']) and !empty($commands['commands'])) {
             foreach ($commands['commands'] as $command) {
                 if (str_contains($command['message'], '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)')) {
                     $installedCommands[] = $command;
+
+                    // Validate if token parameter is present when users use own API key
+                    if (Auth::user()->settings->api_key && trim(Auth::user()->settings->api_key != '')) {
+                        if (!str_contains($command['message'], '&token=')) {
+                            $commandNeedsToken = true;
+                        }
+                    }
                 }
             }
         }
 
         return view('dashboard', [
-            'commands' => $installedCommands
+            'commands' => $installedCommands,
+            'command_needs_token' => $commandNeedsToken
         ]);
     }
 
@@ -68,6 +77,10 @@ class DashboardController extends Controller
                             $this->installNightbotCommand($commandCode);
                         }
                     }
+                break;
+
+                case 'update_commands':
+                    $this->updateNightbotCommands();
                 break;
             }
         } elseif ($request->has('save_settings')) {
@@ -105,6 +118,32 @@ class DashboardController extends Controller
         Auth::setUser($user->fresh());
     }
 
+    private function updateNightbotCommands()
+    {
+        $token = session('nightbot_api_token');
+        if (!$token) {
+            return redirect('/logout');
+        }
+
+        $nightbotApi = new NightbotAPI;
+        $nightbotApi->setAccessToken($token);
+        $commands = $nightbotApi->getCustomCommands();
+
+        if (isset($commands['commands']) and !empty($commands['commands'])) {
+            foreach ($commands['commands'] as $command) {
+                if (
+                    str_contains($command['message'], '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)') &&
+                    !str_contains($command['message'], '&token=')
+                ) {
+                    // Update command
+                    $nightbotApi->editCustomCommand($command['_id'], [
+                        'message' => '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)&token='. Auth::user()->token .')'
+                    ]);
+                }
+            }
+        }
+    }
+
     private function installNightbotCommand($commandCode)
     {
         $token = session('nightbot_api_token');
@@ -118,7 +157,7 @@ class DashboardController extends Controller
 
         $commandData = [
             'coolDown' => 5,
-            'message' => '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring))',
+            'message' => '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)&token='. Auth::user()->token .')',
             'name' => $commandCode,
             'userLevel' => 'everyone'
         ];
@@ -126,13 +165,13 @@ class DashboardController extends Controller
         if (isset($commands['commands']) and !empty($commands['commands'])) {
             foreach ($commands['commands'] as $command) {
                 if ($command['name'] == $commandCode) {
-                    // update
+                    // Update command
                     $nightbotApi->editCustomCommand($command['_id'], $commandData);
                     return;
                 }
             }
 
-            // create new
+            // Create new command
             $nightbotApi->addCustomCommand($commandData);
         }
     }
