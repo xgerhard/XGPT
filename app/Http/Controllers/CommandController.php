@@ -19,14 +19,14 @@ class CommandController extends Controller
                 'name' => 'xgerhard',
                 'displayName' => 'xgerhard',
                 'provider' => 'twitch',
-                'providerId' => '12345678',
+                'providerId' => '49056910',
                 'userLevel' => 'owner'
             ]);
             $nbheaders->setChannel([
                 'name' => 'xgerhard',
                 'displayName' => 'xgerhard',
                 'provider' => 'twitch',
-                'providerId' => '12345678'
+                'providerId' => '49056910'
             ]);
         }
 

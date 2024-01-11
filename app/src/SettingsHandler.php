@@ -22,7 +22,7 @@ class SettingsHandler
         ])->first();
 
         if ($user && $user->settings()->exists()) {
-            return $user->settings();
+            return $user->settings;
         } else {
             return $this->getDefaultSettings($provider);
         }
@@ -31,6 +31,7 @@ class SettingsHandler
     public function getDefaultSettings($provider)
     {
         return new UserSettings([
+            'api_key' => '',
             'start_instructions' => $this->getStartInstructions($provider),
             'end_instructions' => $this->endInstructions,
             'show_conversation_id' => $this->showConversationId,
