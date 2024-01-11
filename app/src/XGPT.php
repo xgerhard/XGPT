@@ -87,11 +87,9 @@ class XGPT
             $user = $this->nbheaders->getUser();
             $username = $user->displayName;
 
-            if ($this->settings->show_sponsor_heart) {
-                $badge = Badges::getBadge($user->provider, $user->providerId);
-                if ($badge) {
-                    $username = '['. $badge .'] '. $username;
-                }
+            $badge = Badges::getBadge($user->provider, $user->providerId);
+            if ($badge) {
+                $username = '['. $badge .'] '. $username;
             }
         }
 

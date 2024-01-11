@@ -79,13 +79,15 @@ class DashboardController extends Controller
                 $user->settings()->updateOrCreate([
                     'user_id' => $user->id
                 ], [
-                    'api_key' => Crypt::encryptString($request->post('api_key')),
+                    'api_key' => $request->post('api_key') ? Crypt::encryptString($request->post('api_key')) : '',
                     'start_instructions' => $request->post('start_instructions'),
                     'end_instructions' => $request->post('end_instructions'),
                     'show_conversation_id' => $request->has('show_conversation_id'),
                     'mention_user' => $request->has('mention_user'),
                     'show_sponsor_heart' => $request->has('show_sponsor_heart')
                 ]);
+
+                Auth::user()->update(['sponsor' => $request->post('api_key') ? 1 : 0]);
             } catch (Exception $e) {
                 Session::flash('message', 'Something went wrong.. please try again later.');
                 Session::flash('alert-class', 'callout-block-danger'); 
