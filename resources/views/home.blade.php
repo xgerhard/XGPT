@@ -41,7 +41,7 @@
 	            <div class="docs-top-utilities d-flex justify-content-end align-items-center">	
 					<ul class="social-list list-inline mx-md-3 mx-lg-5 mb-0 d-none d-lg-flex">
 						<li class="list-inline-item"><a href="https://github.com/xgerhard/XGPT" target="blank"><i class="fa fa-github fa-fw"></i></a></li>
-			            <li class="list-inline-item"><a href="https://twitter.com/gerhardoh" target="blank"><i class="fa fa-twitter fa-fw"></i></a></li>
+			            <li class="list-inline-item"><a href="mailto:hi@gerhard.dev" target="blank"><i class="fa fa-envelope fa-fw"></i></a></li>
 		            </ul><!--//social-list-->
 		            <a href="https://xgpt.gerhard.dev/dashboard" class="btn btn-secondary d-none d-lg-flex">Sign in with Nightbot</a>
 	            </div><!--//docs-top-utilities-->
@@ -194,7 +194,7 @@
 				    </header>
 				     <section class="docs-section" id="item-4-1">
 						<h2 class="section-heading">Contact</h2>
-						<p>Need help with the installation, any questions, or a thank you, feel free to send me a tweet/DM on Twitter: <a href="http://twitter.com/gerhardoh" target="blank">twitter.com/gerhardoh</a>.</p>
+						<p>Need help with the installation, any questions, or a thank you, feel free to send me a mail at: <a href="mailto:hi@gerhard.dev" target="blank">hi@gerhard.dev</a>.</p>
 					</section><!--//section-->
 					<section class="docs-section" id="item-4-2">
 						<h2 class="section-heading">Contribute</h2>
@@ -207,7 +207,7 @@
 			            <small class="copyright">Created with <span class="sr-only">love</span><i class="fa fa-heart" style="color: #fb866a;"></i> by <a class="theme-link" href="https://gerhard.dev" target="blank">Gerhard</a> and designed by <a class="theme-link" href="http://themes.3rdwavemedia.com" target="_blank">Xiaoying Riley</a>.</small>
 				        <ul class="social-list list-unstyled pt-4 mb-0">
 						    <li class="list-inline-item"><a href="https://github.com/xgerhard/XGPT" target="blank"><i class="fab fa-github fa-fw"></i></a></li> 
-				            <li class="list-inline-item"><a href="https://twitter.com/gerhardoh" target="blank"><i class="fab fa-twitter fa-fw"></i></a></li>
+				            <li class="list-inline-item"><a href="mailto:hi@gerhard.dev" target="blank"><i class="fab fa-envelope fa-fw"></i></a></li>
 				        </ul><!--//social-list-->
 				    </div>
 			    </footer>
