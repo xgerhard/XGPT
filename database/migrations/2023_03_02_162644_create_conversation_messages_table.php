@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->string('role', 25);
-            $table->string('content');
+            $table->text('content');
             $table->string('conversation_id', 10);
             $table->foreign('conversation_id')->references('id')->on('conversations');
         });
