@@ -161,7 +161,7 @@ class XGPT
                 }
                 $message = substr($message, 0, $secondMessageStartPosition) .'...';
             } else {
-                $message = substr($message, 0, $messageLength - 4);
+                $message = substr($message, 0, $messageLength - $conversionIdLength);
                 $this->storeMessage($message, 'assistant');
             }
 
