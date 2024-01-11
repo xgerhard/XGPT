@@ -38,7 +38,7 @@ class CommandController extends Controller
             return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
         }
 
-        if($request->get('q') == 'dashboard-update') {
+        if (str_contains($request->get('q'), 'dashboard-update')) {
             return 'Hiya @'. $nbheaders->getChannel()->displayName.'! A message to notify you we updated the XGPT AI command. Personalize your AI, e.g. to respond in a certain language or to set your own API key. Visit xgpt.gerhard.dev to check it out! :)';
         }
 
