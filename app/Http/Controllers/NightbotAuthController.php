@@ -29,7 +29,8 @@ class NightbotAuthController extends Controller
                 'name' => $nightbotUser['name'],
                 'display_name' => $nightbotUser['displayName'],
                 'provider' => $nightbotUser['provider'],
-                'provider_id' => $nightbotUser['providerId']
+                'provider_id' => $nightbotUser['providerId'],
+                'token' => $this->generateToken()
             ]);
         }
 
@@ -46,5 +47,19 @@ class NightbotAuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    private function generateToken()
+    {
+        while (true) {
+            $string = generate_random_string(
+                8 // length
+            );
+
+            $user = User::where('token', $string)->first();
+            if (!$user) {
+                return $string;
+            }
+        }
     }
 }

@@ -38,19 +38,32 @@ class CommandController extends Controller
             return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
         }
 
-        $XGPT = new XGPT($nbheaders);
+        try {
+            $XGPT = new XGPT($nbheaders);
 
-        $messageParts = explode(' ', $request->get('q'));
-        if (str_starts_with($messageParts[0], '#') && strlen($messageParts[0]) == 4) {
-            $XGPT->setConversionId(substr($messageParts[0], 1));
-            unset($messageParts[0]);
+            $messageParts = explode(' ', $request->get('q'));
+            if (str_starts_with($messageParts[0], '#') && strlen($messageParts[0]) == 4) {
+                $XGPT->setConversionId(substr($messageParts[0], 1));
+                unset($messageParts[0]);
+            }
+
+            if (count($messageParts) == 0) {
+                return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
+            }
+
+            $XGPT->setMessage(implode(' ', $messageParts));
+            return $XGPT->getResponse();
+
+        } catch (\App\Exceptions\InvalidTokenException $e) {
+            return 'Error: XGPT token is missing or doesn\'t match. Please visit https://xgpt.gerhard.dev/dashboard to resolve this issue.';
+        } catch (\App\Exceptions\RateLimitException $e) {
+            return 'Error: Thanks for using this command! :) Unfortunately the OpenAI ChatGPT API is not free and it seems like we hit our monthly limit, this will reset first of the month. You can support this project at: https://github.com/sponsors/xgerhard ❤️';
+        } catch (\App\Exceptions\InvalidApiKeyException $e) {
+            return 'Error: Incorrect API key provided in your XGPT settings. You can find your API key at https://platform.openai.com/account/api-keys';
+        } catch (\Illuminate\Http\Client\ConnectionException) {
+            return 'Error: ChatGPT took to long to respond. Please try again in a bit. ResidentSleeper';
+        } catch (\Exception $e) {
+            return 'Error: Unknown error occured, please contact xgerhard';
         }
-
-        if (count($messageParts) == 0) {
-            return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
-        }
-
-        $XGPT->setMessage(implode(' ', $messageParts));
-        return $XGPT->getResponse();
     }
 }

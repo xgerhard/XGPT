@@ -19,7 +19,8 @@ class User extends Authenticatable
         'display_name',
         'provider',
         'provider_id',
-        'sponsor'
+        'sponsor',
+        'token'
     ];
 
     public function settings(): HasOne

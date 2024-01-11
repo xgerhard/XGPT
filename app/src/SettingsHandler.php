@@ -14,7 +14,7 @@ class SettingsHandler
     private $mentionUser = 1;
     private $showSponsorHeart = 1;
 
-    public function getSettings($provider, $providerId)
+    public function getUserWithSettings($provider, $providerId)
     {
         $user = User::where([
             'provider' => $provider,
@@ -22,7 +22,7 @@ class SettingsHandler
         ])->first();
 
         if ($user && $user->settings()->exists()) {
-            return $user->settings;
+            return $user;
         } else {
             return $this->getDefaultSettings($provider);
         }
@@ -30,14 +30,16 @@ class SettingsHandler
 
     public function getDefaultSettings($provider)
     {
-        return new UserSettings([
+        $user = new User();
+        $user->settings = new UserSettings([
             'api_key' => '',
             'start_instructions' => $this->getStartInstructions($provider),
             'end_instructions' => $this->endInstructions,
             'show_conversation_id' => $this->showConversationId,
             'mention_user' => $this->mentionUser,
             'show_sponsor_heart' => $this->showSponsorHeart
-        ]);        
+        ]);
+        return $user;
     }
 
     public function setDefaultSettings(User $user)

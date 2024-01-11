@@ -8,6 +8,9 @@ use App\src\Badges;
 use App\Models\Conversation;
 use App\Models\ConversationMessage;
 use App\src\SettingsHandler;
+use App\Exceptions\InvalidTokenException;
+use App\Exceptions\InvalidApiKeyException;
+use App\Exceptions\RateLimitException;
 use Str;
 use Log;
 
@@ -21,11 +24,26 @@ class XGPT
     {
         $this->nbheaders = $nbheaders;
 
+        // Fetch settings for channel
         $settings = new SettingsHandler;
-        $this->settings = $settings->getSettings($nbheaders->getChannel()->provider, $nbheaders->getChannel()->providerId);
+        $channel = $settings->getUserWithSettings(
+            $nbheaders->getChannel()->provider, 
+            $nbheaders->getChannel()->providerId
+        );
+        $this->settings = $channel->settings;
 
+        // If API key is set, make sure the tokens match
+        if (
+            $this->settings->api_key &&
+            (!request()->has('token') || request()->get('token') != $channel->token)
+        ) {
+            throw new InvalidTokenException();
+        }
+
+        // Init OpenAI API
         $this->openai = new OpenAI($this->settings->api_key);
 
+        // AI start instructions
         $this->messages[] = [
             'role' => 'system',
             'content' => $this->settings->start_instructions
@@ -93,15 +111,11 @@ class XGPT
             }
         }
 
-        try {
-            $response = $this->openai->getChatCompletion([
-                'model' => 'gpt-3.5-turbo',
-                'max_tokens' => 80,
-                'messages' => $this->getMessages()
-            ]);
-        } catch (\Illuminate\Http\Client\ConnectionException) {
-            return ($username ? $username .': ' : '') . ' ChatGPT took to long to respond. Please try again in a bit. ResidentSleeper';
-        }
+        $response = $this->openai->getChatCompletion([
+            'model' => 'gpt-3.5-turbo',
+            'max_tokens' => 80,
+            'messages' => $this->getMessages()
+        ]);
 
         if (isset($response['choices'][0]['message']['content'])) {
             
@@ -164,7 +178,7 @@ class XGPT
             if (isset($response['error']['type'])) {
                 switch ($response['error']['type']) {
                     case 'insufficient_quota':
-                        $message = 'Thanks for using this command! :) Unfortunately the OpenAI ChatGPT API is not free and it seems like we hit our monthly limit, this will reset first of the month. You can support this project at: https://github.com/sponsors/xgerhard ❤️';
+                        throw new RateLimitException();
                     break;
 
                     case 'invalid_request_error':
@@ -175,7 +189,7 @@ class XGPT
                                 'provider' => $this->nbheaders->getProvider(),
                                 'channel' => $this->nbheaders->getChannel()->name
                             ], true));
-                            $message = 'Incorrect API key provided in your XGPT settings. You can find your API key at https://platform.openai.com/account/api-keys';
+                            throw new InvalidApiKeyException();
                         }
                     break;
 
