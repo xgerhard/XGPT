@@ -25,11 +25,11 @@ class CommandMiddleware
      */
     public function terminate(Request $request, Response $response): void
     {
-        if (isset($response->original)) {
-            $conversation = substr($response->original, -3);
+        if (session()->has('conversion_id')) {
+            $conversation = session('conversion_id');
             if (session()->has($conversation)) {
                 $extraMessage = session($conversation);
-                session()->forget($conversation);
+                session()->forget(['conversion_id', $conversation]);
                 $nightbotAPI = new NightbotAPI;
                 $nightbotAPI->sendMessageByResponseUrl($extraMessage['responseUrl'], $extraMessage['message']);
             }

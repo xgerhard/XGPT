@@ -153,6 +153,7 @@ class XGPT
                         $secondMessage .= ' #'. $this->conversation->id;
                     }
 
+                    session(['conversion_id' => $this->conversation->id]);
                     session([$this->conversation->id => [
                         'responseUrl' => $this->nbheaders->getResponseUrl(),
                         'message' => $secondMessage
