@@ -47,7 +47,7 @@ class DashboardController extends Controller
 
                     // Validate if token parameter is present when users use own API key
                     if (Auth::user()->settings->api_key && trim(Auth::user()->settings->api_key != '')) {
-                        if (!str_contains($command['message'], '&token=')) {
+                        if (!str_contains($command['message'], '&token='. Auth::user()->token .')')) {
                             $commandNeedsToken = true;
                         }
                     }
@@ -131,10 +131,7 @@ class DashboardController extends Controller
 
         if (isset($commands['commands']) and !empty($commands['commands'])) {
             foreach ($commands['commands'] as $command) {
-                if (
-                    str_contains($command['message'], '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)') &&
-                    !str_contains($command['message'], '&token=')
-                ) {
+                if (str_contains($command['message'], '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)')) {
                     // Update command
                     $nightbotApi->editCustomCommand($command['_id'], [
                         'message' => '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)&token='. Auth::user()->token .')'
