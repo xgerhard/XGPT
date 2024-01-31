@@ -17,7 +17,9 @@ return new class extends Migration
             $table->string('role', 25);
             $table->text('content');
             $table->string('conversation_id', 10);
-            $table->foreign('conversation_id')->references('id')->on('conversations');
+            $table->foreign('conversation_id')
+                ->references('id')->on('conversations')
+                ->onDelete('cascade');
         });
     }
 
