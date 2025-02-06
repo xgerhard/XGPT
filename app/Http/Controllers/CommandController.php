@@ -38,10 +38,6 @@ class CommandController extends Controller
             return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
         }
 
-        if (str_contains($request->get('q'), 'dashboard-update')) {
-            return 'Hiya @'. $nbheaders->getChannel()->displayName.'! A message to notify you we updated the XGPT AI command. Personalize your AI, e.g. to respond in a certain language or to set your own API key. Visit xgpt.gerhard.dev to check it out! :)';
-        }
-
         try {
             $XGPT = new XGPT($nbheaders);
 
@@ -61,7 +57,7 @@ class CommandController extends Controller
         } catch (\App\Exceptions\InvalidTokenException $e) {
             return 'Error: XGPT token is missing or doesn\'t match. Please visit https://xgpt.gerhard.dev/dashboard to resolve this issue.';
         } catch (\App\Exceptions\RateLimitException $e) {
-            return 'Error: Thanks for using this command! :) Unfortunately the OpenAI ChatGPT API is not free and it seems like we hit our monthly limit, this will reset first of the month. You can support this project at: https://github.com/sponsors/xgerhard ❤️';
+            return 'Error: XGPT has reached it monthly usage limit. Support this project: https://github.com/sponsors/xgerhard ❤️';
         } catch (\App\Exceptions\InvalidApiKeyException $e) {
             return 'Error: Incorrect API key provided in your XGPT settings. You can find your API key at https://platform.openai.com/account/api-keys';
         } catch (\Illuminate\Http\Client\ConnectionException) {
