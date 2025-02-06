@@ -17,6 +17,7 @@ class NightbotAPI
 
     public function sendMessageByResponseUrl($url, $message)
     {
+        $message = mb_convert_encoding($message, 'UTF-8', 'UTF-8');
         return $this->request($url, 'POST', [], ['message' => $message]); 
     }
 
