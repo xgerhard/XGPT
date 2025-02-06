@@ -112,7 +112,7 @@ class XGPT
         }
 
         $response = $this->openai->getChatCompletion([
-            'model' => 'gpt-3.5-turbo',
+            'model' => 'gpt-4o-mini',
             'max_tokens' => 80,
             'messages' => $this->getMessages()
         ]);
@@ -123,7 +123,7 @@ class XGPT
             $message = trim(preg_replace('/\s+/', ' ', $message));
             $conversionIdLength = $this->settings->show_conversation_id ? 4 : 0;
 
-            $messageLength = 399;
+            $messageLength = $this->nbheaders->getProvider() == 'youtube' ? 199 : 399;
             if ($username && $this->settings->mention_user) {
                 $messageLength -= strlen($username) + 2;
             }
@@ -131,7 +131,7 @@ class XGPT
             // If the response message is too long, we can send a second message.
             if (strlen($message) > $messageLength) {
                 if ($this->nbheaders->getResponseUrl()) {
-                    $secondMessageLength = 399;
+                    $secondMessageLength = $this->nbheaders->getProvider() == 'youtube' ? 199 : 399;;
 
                     // These calculations made my head spin..
                     // $secondMessageStartPosition (end of first message)= First message max characters, minus conversionId length, minus 3 (...).
