@@ -51,7 +51,13 @@ class CommandController extends Controller
                 return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
             }
 
-            $XGPT->setMessage(implode(' ', $messageParts));
+            $message = implode(' ', $messageParts);
+
+            if (!$this->hasTextContent($message)) {
+                return ' ';
+            }
+
+            $XGPT->setMessage($message);
             return $XGPT->getResponse();
 
         } catch (\App\Exceptions\InvalidTokenException $e) {
@@ -65,5 +71,12 @@ class CommandController extends Controller
         } catch (\Exception $e) {
             return 'Error: Unknown error occured, please contact xgerhard';
         }
+    }
+
+    private function hasTextContent($text)
+    {
+        $text = trim(preg_replace('/\s+/', '', $text));
+        $text = preg_replace('/[\x{1F000}-\x{1FAFF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}\x{FE0E}\x{FE0F}\x{200D}\s]+/u', '', $text);
+        return $text !== '';
     }
 }
