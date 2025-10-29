@@ -22,6 +22,11 @@ class OpenAI
         return $this->request('/chat/completions', 'POST', [], $post); 
     }
 
+    public function createResponse($post)
+    {
+        return $this->request('/responses', 'POST', [], $post); 
+    }
+
     public function request($path,  $method = 'GET', $parameters = [], $post = [])
     {
         return Http::accept('application/json')->timeout(7.5)->withToken($this->apiKey)->post(

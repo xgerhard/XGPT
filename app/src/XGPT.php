@@ -45,7 +45,7 @@ class XGPT
 
         // AI start instructions
         $this->messages[] = [
-            'role' => 'system',
+            'role' => 'developer',
             'content' => $this->settings->start_instructions
         ];
     }
@@ -70,7 +70,7 @@ class XGPT
     public function getMessages()
     {
         return array_merge($this->messages, $this->getConversationMessages(), [[
-            'role' => 'user',
+            'role' => 'developer',
             'content' => $this->settings->end_instructions
         ]]);
     }
@@ -111,15 +111,26 @@ class XGPT
             }
         }
 
-        $response = $this->openai->getChatCompletion([
-            'model' => 'gpt-4o-mini',
-            'max_tokens' => 80,
-            'messages' => $this->getMessages()
+        $response = $this->openai->createResponse([
+            'model' => 'gpt-5-nano',
+            'input' => $this->getMessages(),
+            'reasoning' => [
+                'effort' => 'minimal'
+            ]
         ]);
 
-        if (isset($response['choices'][0]['message']['content'])) {
-            
-            $message = $response['choices'][0]['message']['content'];
+        if (isset($response['output'])) {
+            $message = '';
+            foreach ($response['output'] as $item) {
+                if (($item['type'] ?? '') === 'message' && ($item['status'] ?? '') === 'completed') {
+                    foreach ($item['content'] as $contentPart) {
+                        if (($contentPart['type'] ?? '') === 'output_text') {
+                            $message .= $contentPart['text'];
+                        }
+                    }
+                }
+            }
+
             $message = trim(preg_replace('/\s+/', ' ', $message));
             $conversionIdLength = $this->settings->show_conversation_id ? 4 : 0;
 
