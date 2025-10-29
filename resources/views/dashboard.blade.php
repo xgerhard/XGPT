@@ -203,7 +203,7 @@
                                 After creating your account and setting up your billing information, you can create an API key here: <a href="https://platform.openai.com/api-keys" target="blank">platform.openai.com/api-keys</a>.
                             </p>
                             <p>
-                                More information about pricing here: <a href="https://openai.com/pricing" target="blank">openai.com/pricing</a>. We use the gpt-3.5-turbo model which currectly costs $0.002 / 1K tokens. Tokens are calculated based on the amount of text that has to be processed. A helpful rule of thumb is that one token generally corresponds to ~4 characters of text for common English text. This translates to roughly ¾ of a word (so 100 tokens ~= 75 words).<br/>
+                                More information about pricing here: <a href="https://platform.openai.com/docs/pricing" target="blank">platform.openai.com/docs/pricing</a>. We use the <b>gpt-5-nano</b> model. Tokens are calculated based on the amount of text that has to be processed. A helpful rule of thumb is that one token generally corresponds to ~4 characters of text for common English text. This translates to roughly ¾ of a word (so 100 tokens ~= 75 words).<br/>
                             </p>
                             <p>
                                 From our experience so far, the costs are about $0.01 every time a command is used.	
