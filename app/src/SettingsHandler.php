@@ -9,7 +9,7 @@ use App\Models\UserSettings;
 class SettingsHandler
 {
     private $startInstructions =  'You are a helpful assistant for a <provider> chat.';
-    private $endInstructions = 'Answer in 250 characters or less.';
+    private $endInstructions = 'Answer in <length> characters or less.';
     private $showConversationId = 1;
     private $mentionUser = 1;
     private $showSponsorHeart = 1;
@@ -34,7 +34,7 @@ class SettingsHandler
         $user->settings = new UserSettings([
             'api_key' => '',
             'start_instructions' => $this->getStartInstructions($provider),
-            'end_instructions' => $this->endInstructions,
+            'end_instructions' => $this->getEndInstructions($provider),
             'show_conversation_id' => $this->showConversationId,
             'mention_user' => $this->mentionUser,
             'show_sponsor_heart' => $this->showSponsorHeart
@@ -47,7 +47,7 @@ class SettingsHandler
         $user->settings()->create([
             'user_id' => $user->id,
             'start_instructions' => $this->getStartInstructions($user->provider),
-            'end_instructions' => $this->endInstructions,
+            'end_instructions' => $this->getEndInstructions($user->provider),
             'show_conversation_id' => $this->showConversationId,
             'mention_user' => $this->mentionUser,
             'show_sponsor_heart' => $this->showSponsorHeart
@@ -58,4 +58,10 @@ class SettingsHandler
     {
         return str_replace('<provider>', ucfirst($provider), $this->startInstructions);
     }
+
+    private function getEndInstructions($provider)
+    {
+        $length = $provider == 'youtube' ? 150 : 250;
+        return str_replace('<length>', $length, $this->endInstructions);
+    } 
 }
