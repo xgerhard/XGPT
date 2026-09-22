@@ -181,10 +181,17 @@ anywhere in the installed `laravel/ai` v0.11.2 — don't go looking for it):
   tier rather than erroring if the owner later shrinks the allowlist).
 - `messages()` is the entire history mechanism — there's no conversation entity any more. It
   queries `messages` for the last `xgpt.history.max_messages` rows within
-  `xgpt.history.window_minutes`, oldest first, and formats `role = user` rows as
-  `"[{username}] {content}"` so the model can tell multiple chatters apart in one shared,
-  per-channel rolling conversation. `role = assistant` rows are the bot's own prior replies,
-  unprefixed (single identity).
+  `xgpt.history.window_minutes`, oldest first, and formats every user-authored line (current
+  prompt included, via `formatLine()`) as `"[{username}] {content}"` so the model can tell
+  multiple chatters apart in one shared, per-channel rolling conversation. `role = assistant`
+  rows are the bot's own prior replies, unprefixed (single identity).
+- Ordered by `id`, not `created_at` — this table's timestamps are whole-second precision, and a
+  user message + its reply land a few milliseconds apart, well within the same second, so they
+  reliably tie. Ordering by `created_at` alone (confirmed by reproducing it) comes back
+  completely reversed on a tie: neither SQL's `ORDER BY` nor a stable PHP sort can break a tie
+  they can't see. `id` is a reliable, always-increasing proxy for insertion order that
+  `created_at` can't guarantee at this precision; `created_at` still does the time-window filter,
+  which doesn't need sub-second precision.
 - `laravel/ai`'s `MessageRole` enum only has `user`/`assistant`/`tool_result` — there's no
   `system`/`developer` role, so all system-level guidance lives in `instructions()` as one block
   (see below), never as a message.
