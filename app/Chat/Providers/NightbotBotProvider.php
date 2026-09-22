@@ -99,9 +99,9 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
 
         $headers = new NBHeaders;
 
-        // Lets /api/command be exercised from a browser during local development, exactly like
-        // the pre-rewrite app did — only ever active when APP_DEBUG is on, and only when the
-        // request doesn't already carry real Nightbot headers.
+        // Lets /api/command be exercised from a browser during local development — only ever
+        // active when APP_DEBUG is on, and only when the request doesn't already carry real
+        // Nightbot headers.
         if (config('app.debug') && ! $request->headers->has('Nightbot-Channel')) {
             $headers->setUser([
                 'name' => 'xgerhard',
@@ -153,11 +153,10 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
     }
 
     /**
-     * `isNightbotRequest()` has no cryptographic verification (confirmed by reading nbheaders'
-     * source: it's `!! $channel`, i.e. "was a Nightbot-Channel header present at all"), which
-     * means Nightbot-Response-Url is attacker-controlled on a spoofed request. Blindly POSTing to
-     * it (as the pre-rewrite app did) is an open SSRF relay. Only ever forward to Nightbot's own
-     * API host.
+     * `isNightbotRequest()` has no cryptographic verification (nbheaders' source: it's just
+     * `!! $channel`, i.e. "was a Nightbot-Channel header present at all"), so
+     * Nightbot-Response-Url is attacker-controlled on a spoofed request. Only Nightbot's own API
+     * host is ever forwarded to, to avoid an open SSRF relay.
      */
     private function safeResponseUrl(?string $url): ?string
     {

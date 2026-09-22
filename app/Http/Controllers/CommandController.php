@@ -145,7 +145,7 @@ class CommandController extends Controller
 
     /**
      * Store the reply, apply mention/length formatting, and split into a second message via the
-     * bot's response URL when the reply doesn't fit — porting the pre-rewrite two-message trick.
+     * bot's response URL when it doesn't fit in one.
      */
     private function deliver(User $channel, $incoming, $bot, string $text): string
     {
@@ -173,8 +173,8 @@ class CommandController extends Controller
 
             $channel->messages()->create(['role' => 'assistant', 'content' => $stored]);
 
-            // Deferred, not inline: Nightbot has already received the first half by the time this
-            // runs (see CommandMiddleware::terminate()), matching the pre-rewrite two-message flow.
+            // Deferred, not inline: by the time DeliverOverflowMessage::terminate() runs, Nightbot
+            // has already received the first half.
             session(['xgpt_overflow' => ['response_url' => $incoming->responseUrl, 'message' => $secondPart]]);
         } else {
             $channel->messages()->create(['role' => 'assistant', 'content' => substr($text, 0, $maxLength - 3)]);

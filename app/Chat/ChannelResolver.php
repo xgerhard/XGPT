@@ -7,10 +7,8 @@ use Illuminate\Support\Str;
 
 /**
  * Finds-or-creates the channel (User row) behind an incoming chat message or a dashboard login.
- * Both paths funnel through here so a channel using the free tier (never having visited the
- * dashboard) still gets a real row to hang rolling history and rate-limit state off of — the
- * pre-rewrite app only persisted a User at login and used an in-memory stand-in otherwise, which
- * doesn't work now that history needs somewhere to live.
+ * Both paths funnel through here so a free-tier channel (one that's never visited the dashboard)
+ * still gets a real row to hang rolling history and rate-limit state off of.
  */
 class ChannelResolver
 {

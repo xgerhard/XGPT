@@ -68,7 +68,7 @@ failure modes should follow that pattern; this is deliberately broad, not sloppy
 `CommandController::deliver()` returns the reply as the direct HTTP response whenever it fits in
 one chat message. Only when it doesn't does it fall back to Nightbot's `Nightbot-Response-Url`
 mechanism (POST the rest of the message, deferred to after the response via the terminable
-`App\Http\Middleware\DeliverOverflowMessage`, matching the pre-rewrite `CommandMiddleware`) — see
+`App\Http\Middleware\DeliverOverflowMessage`) — see
 `App\Chat\Providers\NightbotBotProvider::safeResponseUrl()` for why that URL is host-allowlisted
 first.
 
@@ -137,8 +137,8 @@ hand-crafting that header on a raw request to the public endpoint. Consequences 
 around this:
 
 - `NightbotBotProvider` only ever forwards to `Nightbot-Response-Url` if its host is exactly
-  `api.nightbot.tv` (`safeResponseUrl()`) — the pre-rewrite app POSTed to whatever URL that
-  attacker-controlled header contained, an open SSRF relay. Don't remove that host check.
+  `api.nightbot.tv` (`safeResponseUrl()`) — forwarding to whatever URL an attacker-controlled
+  header contains would be an open SSRF relay. Don't remove that host check.
 - The per-channel rate limiter in `CommandController` is keyed by the *claimed* identity, so an
   attacker rotating the claimed `provider_id` can dodge it — it bounds damage, it isn't a real
   identity boundary. The per-IP `throttle:chat-command-ip` route middleware and
@@ -186,8 +186,8 @@ anywhere in the installed `laravel/ai` v0.11.2 — don't go looking for it):
   per-channel rolling conversation. `role = assistant` rows are the bot's own prior replies,
   unprefixed (single identity).
 - `laravel/ai`'s `MessageRole` enum only has `user`/`assistant`/`tool_result` — there's no
-  `system`/`developer` role. The old app's two-message "start/end instructions" sandwich collapsed
-  into `instructions()` returning one block instead.
+  `system`/`developer` role, so all system-level guidance lives in `instructions()` as one block
+  (see below), never as a message.
 - `instructions()` is a **mandatory framing constant + optional per-channel text**, not one fully
   user-editable field. `ChatResponder::FRAMING` (always prepended, never overridable) tells the
   model the history it's about to read is a shared multi-user window — lines labeled `[username]`,
@@ -212,17 +212,12 @@ anywhere in the installed `laravel/ai` v0.11.2 — don't go looking for it):
   wrapped into a typed exception there — it bubbles up as a raw
   `Illuminate\Http\Client\RequestException`, which `CommandController` catches separately.
 - `ChatResponder implements HasProviderOptions` to pin OpenAI's `gpt-5`-family models to
-  `reasoning.effort: minimal` (`providerOptions()`, merged straight into the request body by
-  `Gateway\OpenAi\Concerns\BuildsTextRequests` — only if the Agent implements the interface at
-  all). This matches the pre-rewrite app's explicit setting on the Responses API; forgetting it
-  is exactly the kind of gap that doesn't error, it silently no-ops and OpenAI falls back to its
-  own default reasoning effort (more latency, more reasoning tokens billed, for no reply-quality
-  benefit this app needs). **General lesson**: several of `laravel/ai`'s Agent behaviors work this
-  way — opt-in by implementing a marker interface (`Conversational`, `HasTools`,
-  `HasProviderOptions`, ...), not by overriding a base class method — so a missing interface is a
-  silent capability gap, not a visible error. When porting another provider-specific setting from
-  the old app, check the relevant gateway's source for what interface/method it actually consults
-  before assuming a plain method on the Agent is enough.
+  `reasoning.effort: minimal` — without it, a reasoning model like gpt-5-nano defaults to a
+  higher effort level (more reasoning tokens billed, more latency, no reply-quality benefit here).
+  **General lesson**: several of `laravel/ai`'s Agent behaviors are opt-in via a marker interface
+  (`Conversational`, `HasTools`, `HasProviderOptions`, ...), not a method you can just define — a
+  missing interface is a silent capability gap, not a visible error. Check the relevant gateway's
+  source for what it actually consults before assuming a plain method is enough.
 - Test with `ChatResponder::fake(['some reply text'])` (from `laravel/ai`'s `Promptable` trait) —
   never let a test hit a real provider. Fakes prove the request was *shaped* correctly
   (`providerOptions()`/`instructions()`/`messages()` return what's expected) — they can't prove a

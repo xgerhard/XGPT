@@ -52,7 +52,7 @@ it('ignores a custom instructions field that is only whitespace', function () {
     expect($instructions)->not->toContain("\n\n");
 });
 
-it('pins OpenAI to minimal reasoning effort, matching the pre-rewrite app', function () {
+it('pins OpenAI to minimal reasoning effort', function () {
     $channel = User::factory()->create();
     $responder = new ChatResponder($channel->fresh());
 

@@ -110,16 +110,10 @@ class ChatResponder implements Agent, Conversational, HasProviderOptions
     }
 
     /**
-     * Merged directly into the request body by laravel/ai's OpenAI gateway (see
-     * Gateway\OpenAi\Concerns\BuildsTextRequests::buildBody() in the installed package — it
-     * calls Agent::providerOptions() and array_merge()s the result in, only if the Agent
-     * implements this interface at all). Pinned to minimal reasoning effort for OpenAI's
-     * gpt-5-family models — matches the pre-rewrite app's explicit `reasoning.effort: minimal`
-     * on the Responses API. Without this, a reasoning model like gpt-5-nano falls back to
-     * OpenAI's own default effort level: more latency and cost for no reply-quality benefit this
-     * app needs. Other providers have their own, differently-shaped reasoning/thinking-budget
-     * controls — add a case here if a reasoning-capable model from another provider ever gets
-     * enabled, don't assume this OpenAI-specific shape applies to it.
+     * Pins OpenAI's gpt-5-family models to minimal reasoning effort. Without this, a reasoning
+     * model like gpt-5-nano defaults to a higher effort level: more reasoning tokens billed, more
+     * latency, no reply-quality benefit here. Scoped to the openai driver only — other providers
+     * have their own, differently-shaped reasoning controls.
      */
     public function providerOptions(Lab|string $provider): array
     {

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 /**
  * Thin client for Nightbot's account-linked API (distinct from the customapi-style headers
  * Nightbot attaches to /api/command requests, which carry no auth at all — see
- * NightbotBotProvider). Ported near-verbatim from the pre-rewrite App\src\NightbotAPI.
+ * NightbotBotProvider).
  */
 class NightbotApiClient
 {
