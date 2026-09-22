@@ -37,6 +37,16 @@ class ChatResponder implements Agent, Conversational, HasProviderOptions
 
     public function __construct(private readonly User $channel) {}
 
+    /**
+     * The [username] labeling convention referenced in FRAMING — applied to every user-authored
+     * line the model sees, including the current prompt (see CommandController::run()), so the
+     * newest message follows the same convention as the history around it.
+     */
+    public static function formatLine(?string $username, string $content): string
+    {
+        return $username ? "[{$username}] {$content}" : $content;
+    }
+
     public function instructions(): Stringable|string
     {
         $length = $this->channel->provider === 'youtube' ? 150 : 250;
@@ -63,9 +73,7 @@ class ChatResponder implements Agent, Conversational, HasProviderOptions
             ->values()
             ->map(fn ($message) => new Message(
                 $message->role,
-                $message->role === 'user' && $message->username
-                    ? "[{$message->username}] {$message->content}"
-                    : $message->content,
+                self::formatLine($message->username, $message->content),
             ))
             ->all();
     }

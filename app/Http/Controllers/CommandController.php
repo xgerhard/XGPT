@@ -86,8 +86,10 @@ class CommandController extends Controller
             // Prompted before it's stored: ChatResponder::messages() reads this table fresh at
             // call time, and laravel/ai always appends the prompt() text as its own final message
             // on top of that history — storing first would make the newest message appear twice
-            // in the request sent to the provider.
-            $response = $responder->prompt($incoming->message);
+            // in the request sent to the provider. Labeled with [username] via the same
+            // formatLine() the history uses, so the newest message follows the same convention
+            // FRAMING tells the model to expect, rather than being the one unlabeled line.
+            $response = $responder->prompt(ChatResponder::formatLine($incoming->username, $incoming->message));
 
             $channel->messages()->create([
                 'role' => 'user',

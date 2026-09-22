@@ -159,6 +159,21 @@ it('prompts the agent before storing the incoming message, so it is not sent twi
         ->and(Message::count())->toBe(2); // stored after: 1 user message, 1 assistant reply
 });
 
+it('labels the current prompt with [username], matching the history convention', function () {
+    $capturedPrompt = null;
+
+    ChatResponder::fake(function (string $prompt) use (&$capturedPrompt) {
+        $capturedPrompt = $prompt;
+
+        return 'a reply';
+    });
+
+    $this->withHeaders(nightbotHeaders(providerId: '852', username: 'dave'))
+        ->get('/api/command?q=whats+the+weather');
+
+    expect($capturedPrompt)->toBe('[dave] whats the weather');
+});
+
 it('does not spend the free-tier budget for a BYO-key channel', function () {
     config(['xgpt.free_tier.daily_request_limit' => 1]);
     ChatResponder::fake(['byo key reply', 'still within free tier', 'exhausted']);
