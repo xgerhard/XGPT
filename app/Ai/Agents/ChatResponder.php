@@ -6,11 +6,13 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
+use Laravel\Ai\Contracts\HasProviderOptions;
+use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Messages\Message;
 use Laravel\Ai\Promptable;
 use Stringable;
 
-class ChatResponder implements Agent, Conversational
+class ChatResponder implements Agent, Conversational, HasProviderOptions
 {
     use Promptable;
 
@@ -105,6 +107,28 @@ class ChatResponder implements Agent, Conversational
         // Nightbot's own urlfetch gives up quickly — stay well under that so we always get to
         // answer (even with an error string) rather than Nightbot timing out on us first.
         return 8;
+    }
+
+    /**
+     * Merged directly into the request body by laravel/ai's OpenAI gateway (see
+     * Gateway\OpenAi\Concerns\BuildsTextRequests::buildBody() in the installed package — it
+     * calls Agent::providerOptions() and array_merge()s the result in, only if the Agent
+     * implements this interface at all). Pinned to minimal reasoning effort for OpenAI's
+     * gpt-5-family models — matches the pre-rewrite app's explicit `reasoning.effort: minimal`
+     * on the Responses API. Without this, a reasoning model like gpt-5-nano falls back to
+     * OpenAI's own default effort level: more latency and cost for no reply-quality benefit this
+     * app needs. Other providers have their own, differently-shaped reasoning/thinking-budget
+     * controls — add a case here if a reasoning-capable model from another provider ever gets
+     * enabled, don't assume this OpenAI-specific shape applies to it.
+     */
+    public function providerOptions(Lab|string $provider): array
+    {
+        $driver = $provider instanceof Lab ? $provider->value : $provider;
+
+        return match ($driver) {
+            'openai' => ['reasoning' => ['effort' => 'minimal']],
+            default => [],
+        };
     }
 
     private function usingOwnKey(): bool

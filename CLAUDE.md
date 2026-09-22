@@ -211,8 +211,24 @@ anywhere in the installed `laravel/ai` v0.11.2 — don't go looking for it):
   shared HTTP-status-to-exception mapping every gateway uses. A 401/403 (invalid key) is **not**
   wrapped into a typed exception there — it bubbles up as a raw
   `Illuminate\Http\Client\RequestException`, which `CommandController` catches separately.
+- `ChatResponder implements HasProviderOptions` to pin OpenAI's `gpt-5`-family models to
+  `reasoning.effort: minimal` (`providerOptions()`, merged straight into the request body by
+  `Gateway\OpenAi\Concerns\BuildsTextRequests` — only if the Agent implements the interface at
+  all). This matches the pre-rewrite app's explicit setting on the Responses API; forgetting it
+  is exactly the kind of gap that doesn't error, it silently no-ops and OpenAI falls back to its
+  own default reasoning effort (more latency, more reasoning tokens billed, for no reply-quality
+  benefit this app needs). **General lesson**: several of `laravel/ai`'s Agent behaviors work this
+  way — opt-in by implementing a marker interface (`Conversational`, `HasTools`,
+  `HasProviderOptions`, ...), not by overriding a base class method — so a missing interface is a
+  silent capability gap, not a visible error. When porting another provider-specific setting from
+  the old app, check the relevant gateway's source for what interface/method it actually consults
+  before assuming a plain method on the Agent is enough.
 - Test with `ChatResponder::fake(['some reply text'])` (from `laravel/ai`'s `Promptable` trait) —
-  never let a test hit a real provider.
+  never let a test hit a real provider. Fakes prove the request was *shaped* correctly
+  (`providerOptions()`/`instructions()`/`messages()` return what's expected) — they can't prove a
+  real model's output is actually better/worse/cheaper for a given setting like this one. That
+  needs a manual check with a real key (compare `usage.reasoning_tokens` in the API response,
+  or just watch actual response latency, before vs after).
 
 ## Conventions
 

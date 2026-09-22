@@ -4,6 +4,7 @@ use App\Ai\Agents\ChatResponder;
 use App\Models\User;
 use App\Models\UserSettings;
 use Carbon\Carbon;
+use Laravel\Ai\Enums\Lab;
 
 function putMessageAt(User $channel, string $role, ?string $username, string $content, Carbon $at): void
 {
@@ -49,6 +50,21 @@ it('ignores a custom instructions field that is only whitespace', function () {
     $instructions = (string) (new ChatResponder($channel->fresh()))->instructions();
 
     expect($instructions)->not->toContain("\n\n");
+});
+
+it('pins OpenAI to minimal reasoning effort, matching the pre-rewrite app', function () {
+    $channel = User::factory()->create();
+    $responder = new ChatResponder($channel->fresh());
+
+    expect($responder->providerOptions('openai'))->toBe(['reasoning' => ['effort' => 'minimal']])
+        ->and($responder->providerOptions(Lab::OpenAI))->toBe(['reasoning' => ['effort' => 'minimal']]);
+});
+
+it('sends no OpenAI-specific reasoning options to a different provider', function () {
+    $channel = User::factory()->create();
+    $responder = new ChatResponder($channel->fresh());
+
+    expect($responder->providerOptions('anthropic'))->toBe([]);
 });
 
 it('windows history to the configured minutes and message cap, oldest first', function () {
