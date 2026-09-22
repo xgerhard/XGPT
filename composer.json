@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "xgerhard/xgpt",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Nightbot custom command backend that lets stream chat talk to an AI model.",
+    "keywords": ["laravel", "nightbot", "ai"],
     "license": "MIT",
     "require": {
         "php": "^8.3",

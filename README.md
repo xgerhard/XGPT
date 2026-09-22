@@ -1,58 +1,67 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# XGPT
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+XGPT lets [Nightbot](https://nightbot.tv) chat with an AI model. Add one command and your
+Twitch/YouTube/Discord chat can ask a question and get an answer back, right in chat.
 
-## About Laravel
+[![tests](https://github.com/xgerhard/XGPT/actions/workflows/tests.yml/badge.svg)](https://github.com/xgerhard/XGPT/actions/workflows/tests.yml)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Free to start**: a shared OpenAI-backed free tier, no API key required to try it.
+- **Bring your own key**: for higher limits, or a different provider (see `config/xgpt.php`
+  for what's enabled).
+- **No hashtags to remember**: each channel has one rolling conversation; XGPT follows the
+  last few minutes of chat automatically instead of needing a `#code` to continue one.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Live at [xgpt.gerhard.dev](https://xgpt.gerhard.dev).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Requirements
 
-## Learning Laravel
+- PHP 8.3+ and Composer
+- MySQL (or SQLite for local dev; see `.env.example`)
+- A [Nightbot](https://nightbot.tv) OAuth application (client ID/secret)
+- An OpenAI API key, for the free tier
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Setup
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Fill in `.env`:
 
-## Contributing
+- `NIGHTBOT_CLIENT_ID` / `NIGHTBOT_CLIENT_SECRET`: from a Nightbot OAuth application
+- `OPENAI_API_KEY`: the free-tier fallback key
+- `XGPT_ENABLED_PROVIDERS`: comma-separated extra providers to offer alongside OpenAI, each
+  needing its own `*_API_KEY` (see `config/xgpt.php`)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+php artisan serve
+```
 
-## Code of Conduct
+With `APP_DEBUG=true`, `/api/command` can be exercised directly from a browser or curl without
+real Nightbot headers.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Testing
 
-## Security Vulnerabilities
+```bash
+vendor/bin/pest
+vendor/bin/pint
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Tests run against an in-memory SQLite database regardless of what `.env` points at.
+
+## How it works
+
+A streamer installs a Nightbot custom command pointing at `/api/command`. Nightbot relays a
+chatter's question as a query string; XGPT resolves the channel, applies rate limits (and a
+token check, for channels using their own key), builds a short rolling conversation from recent
+chat, asks the configured AI provider, and returns a plain-text reply for Nightbot to post back
+into chat.
+
+See [`CLAUDE.md`](CLAUDE.md) for the full architecture, design decisions, and security notes.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT
