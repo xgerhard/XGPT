@@ -19,13 +19,13 @@ return new class extends Migration
     {
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('channel_id')->constrained('users')->cascadeOnDelete();
             $table->string('role', 25);
             $table->string('username')->nullable();
             $table->text('content');
             $table->timestamps();
 
-            $table->index(['user_id', 'created_at']);
+            $table->index(['channel_id', 'created_at']);
         });
     }
 

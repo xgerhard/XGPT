@@ -40,8 +40,8 @@ it('answers a free-tier request and stores both sides of the exchange', function
 
     $channel = User::where('provider_id', '111')->firstOrFail();
 
-    expect(Message::where('user_id', $channel->id)->where('role', 'user')->where('content', 'hi bot')->exists())->toBeTrue()
-        ->and(Message::where('user_id', $channel->id)->where('role', 'assistant')->where('content', 'Hello there!')->exists())->toBeTrue();
+    expect(Message::where('channel_id', $channel->id)->where('role', 'user')->where('content', 'hi bot')->exists())->toBeTrue()
+        ->and(Message::where('channel_id', $channel->id)->where('role', 'assistant')->where('content', 'Hello there!')->exists())->toBeTrue();
 });
 
 it('does not require a token for a free-tier channel', function () {
@@ -123,7 +123,7 @@ it('splits an over-length reply: trims the first message and defers the rest via
     // The full reply (both halves combined) is what's stored for history, not just the
     // first message's truncated-with-ellipsis text.
     $channel = User::where('provider_id', '321')->firstOrFail();
-    $stored = Message::where('user_id', $channel->id)->where('role', 'assistant')->first();
+    $stored = Message::where('channel_id', $channel->id)->where('role', 'assistant')->first();
     expect(strlen($stored->content))->toBe(500)
         ->and($stored->content)->toBe($longReply);
 });
