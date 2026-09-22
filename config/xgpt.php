@@ -24,6 +24,11 @@ return [
         [
             'key' => 'openai',
             'label' => 'OpenAI',
+            // Deliberately stayed on gpt-5-nano as of Sep 2026 rather than a newer nano-tier
+            // model: every newer option costs more per input token, and this workload is
+            // input-heavy (rolling history + framing on every call) against a hard-capped short
+            // output, so an input-price increase costs more than an output-price change saves.
+            // Check OpenAI's current pricing before assuming that's still true later.
             'default_model' => env('XGPT_OPENAI_MODEL', 'gpt-5-nano'),
             'free_tier' => true,
             'key_help_url' => 'https://platform.openai.com/account/api-keys',
