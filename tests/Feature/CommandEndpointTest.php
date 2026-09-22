@@ -1,6 +1,7 @@
 <?php
 
 use App\Ai\Agents\ChatResponder;
+use App\Http\Controllers\CommandController;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Client\Request as HttpClientRequest;
@@ -22,11 +23,11 @@ it('rejects a request with no Nightbot headers at all', function () {
         ->assertSee('Only Nightbot requests allowed.', false);
 });
 
-it('asks for a query when q is missing or empty', function () {
-    $this->withHeaders(nightbotHeaders())
-        ->get('/api/command')
-        ->assertOk()
-        ->assertSee('Missing query', false);
+it('asks for a query when q is missing or empty, with one of the varied replies', function () {
+    $response = $this->withHeaders(nightbotHeaders())->get('/api/command');
+
+    $response->assertOk();
+    expect(CommandController::NO_QUERY_REPLIES)->toContain($response->getContent());
 });
 
 it('answers a free-tier request and stores both sides of the exchange', function () {

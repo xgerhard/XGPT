@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Support\FreeTierBudgetGuard;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Ai\Exceptions\InsufficientCreditsException;
@@ -21,6 +22,28 @@ use RuntimeException;
 
 class CommandController extends Controller
 {
+    /**
+     * Shown when Nightbot relayed an empty (or emoji-only) query — kept varied and light since,
+     * for a lot of chatters, this is the very first thing the bot ever says to them. Picked at
+     * random each time; referenced directly from CommandEndpointTest rather than duplicated there.
+     */
+    public const NO_QUERY_REPLIES = [
+        'How can I help you today?',
+        "Hey, what's up? Ask me something!",
+        "Bleep bloop, I'm here. What do you need?",
+        "I'm listening. Go ahead, ask away.",
+        "Ready when you are. What's the question?",
+        'Beep. Awaiting input. Try asking me something!',
+        "Didn't catch a question there, try again?",
+        'Give me something to work with! Ask me anything.',
+        'Booting up... now ask me something.',
+        'You rang? What can I do for you?',
+        '*robot noises* Go on, ask your question.',
+        "I've got answers, you've got to ask a question first.",
+        "Say the word and I'll do my best to help.",
+        "Still here, still listening. What's on your mind?",
+    ];
+
     public function run(
         Request $request,
         BotProviderRegistry $registry,
@@ -34,7 +57,7 @@ class CommandController extends Controller
             $incoming = $bot->parse($request);
 
             if (! $this->hasTextContent($incoming->message)) {
-                return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
+                return Arr::random(self::NO_QUERY_REPLIES);
             }
 
             // Per-channel throttle, keyed by the *claimed* identity. Nightbot's headers carry no
@@ -57,7 +80,7 @@ class CommandController extends Controller
             $responder = new ChatResponder($channel);
 
             if (! $this->usingOwnKey($channel) && ! $budgetGuard->consume()) {
-                return 'XGPT has reached its free daily usage limit — add your own API key in the dashboard to keep going: https://xgpt.gerhard.dev/dashboard';
+                return 'XGPT has reached its free daily usage limit. Add your own API key in the dashboard to keep going: https://xgpt.gerhard.dev/dashboard';
             }
 
             $channel->messages()->create([

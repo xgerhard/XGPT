@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard — XGPT')
+@section('title', 'XGPT Dashboard')
 
 @section('content')
     @php $settings = auth()->user()->settings; @endphp
@@ -13,7 +13,7 @@
         @if (empty($commands))
             <p>Not installed yet.</p>
         @elseif ($commandNeedsUpdate)
-            <p>Installed, but out of date — click below to refresh it.</p>
+            <p>Installed, but out of date. Click below to refresh it.</p>
         @else
             <p>Installed and up to date.</p>
         @endif
@@ -69,7 +69,7 @@
     </form>
 
     <p>
-        Every reply is part of one rolling conversation shared by your whole chat — the last
+        Every reply is part of one rolling conversation shared by your whole chat: the last
         {{ config('xgpt.history.window_minutes') }} minutes (up to {{ config('xgpt.history.max_messages') }} messages),
         no hashtags needed.
     </p>
