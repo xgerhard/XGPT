@@ -8,8 +8,9 @@ Twitch/YouTube/Discord chat can ask a question and get an answer back, right in 
 - **Free to start**: a shared OpenAI-backed free tier, no API key required to try it.
 - **Bring your own key**: for higher limits, or a different provider (see `config/xgpt.php`
   for what's enabled).
-- **No hashtags to remember**: each channel has one rolling conversation; XGPT follows the
-  last few minutes of chat automatically instead of needing a `#code` to continue one.
+- **Remembers the conversation**: each channel has one rolling conversation; XGPT follows
+  the last few minutes of chat automatically, so you can ask a follow-up without repeating
+  yourself.
 
 Live at [xgpt.gerhard.dev](https://xgpt.gerhard.dev).
 

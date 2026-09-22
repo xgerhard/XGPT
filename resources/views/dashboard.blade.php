@@ -71,7 +71,7 @@
 
     <p>
         Every reply is part of one rolling conversation shared by your whole chat: the last
-        {{ config('xgpt.history.window_minutes') }} minutes (up to {{ config('xgpt.history.max_messages') }} messages),
-        no hashtags needed.
+        {{ config('xgpt.history.window_minutes') }} minutes (up to {{ config('xgpt.history.max_messages') }} messages)
+        are remembered automatically.
     </p>
 @endsection

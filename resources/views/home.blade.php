@@ -23,7 +23,7 @@
     <p>
         Each channel has one rolling conversation with the bot: the last {{ config('xgpt.history.window_minutes') }}
         minutes of chat with it (up to {{ config('xgpt.history.max_messages') }} messages), shared by everyone
-        who talks to it, so the bot can follow a back-and-forth without any hashtag or command syntax.
+        who talks to it, so the bot can follow a back-and-forth naturally.
     </p>
 
     <h2>Providers</h2>

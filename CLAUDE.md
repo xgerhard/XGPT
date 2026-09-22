@@ -14,8 +14,8 @@ pick an AI provider and bring their own API key, and tune the system prompt. Pro
 
 This is a from-scratch rewrite (branch `laravel13-rewrite`) of a Laravel 10 / hand-rolled-OpenAI-
 client predecessor: Laravel 13 + the first-party `laravel/ai` SDK, multi-provider AI (OpenAI free
-tier + BYO-key for anything else the owner enables), and automatic rolling chat history in place
-of the old `#abc` conversation-hashtag mechanic. **The public contract
+tier + BYO-key for anything else the owner enables), and automatic rolling chat history that
+carries follow-up questions without any extra syntax. **The public contract
 `GET /api/command?q=...&token=...` is unchanged** — that's load-bearing, streamers already have it
 installed.
 
