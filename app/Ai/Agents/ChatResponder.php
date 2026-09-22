@@ -2,7 +2,6 @@
 
 namespace App\Ai\Agents;
 
-use App\Chat\ChannelResolver;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Laravel\Ai\Contracts\Agent;
@@ -15,12 +14,35 @@ class ChatResponder implements Agent, Conversational
 {
     use Promptable;
 
+    /**
+     * Always prepended to instructions() — never something a channel's own (optional) custom
+     * text can override or lose. Two things this exists to guarantee:
+     *
+     * 1. The model knows the history it's about to read is a shared, multi-user window (lines
+     *    labeled [username], not one continuous back-and-forth) and to answer only the newest
+     *    message rather than trying to address everyone in the window at once.
+     * 2. The hard chat-length constraint always applies, regardless of what a streamer writes
+     *    in their own instructions field — a channel that clears/replaces it shouldn't lose the
+     *    one guardrail that keeps replies from getting truncated mid-sentence.
+     *
+     * Kept deliberately short: this is sent as input on every single request, so its wording is
+     * a real, ongoing cost, not a one-time one.
+     */
+    private const FRAMING = 'You are a helpful assistant for a %s chat. Multiple people may be '
+        .'chatting with you; messages are labeled [username]. Answer only the newest one, using '
+        .'earlier messages as context only if from the same user or clearly referenced. '
+        ."Don't prefix replies with a name or tag. Answer in %d characters or less.";
+
     public function __construct(private readonly User $channel) {}
 
     public function instructions(): Stringable|string
     {
-        return $this->channel->settings?->instructions
-            ?: app(ChannelResolver::class)->defaultInstructions($this->channel->provider);
+        $length = $this->channel->provider === 'youtube' ? 150 : 250;
+        $framing = sprintf(self::FRAMING, ucfirst($this->channel->provider), $length);
+
+        $custom = trim((string) $this->channel->settings?->instructions);
+
+        return $custom === '' ? $framing : "{$framing}\n\n{$custom}";
     }
 
     /**

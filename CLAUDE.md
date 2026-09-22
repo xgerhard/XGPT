@@ -188,6 +188,23 @@ anywhere in the installed `laravel/ai` v0.11.2 — don't go looking for it):
 - `laravel/ai`'s `MessageRole` enum only has `user`/`assistant`/`tool_result` — there's no
   `system`/`developer` role. The old app's two-message "start/end instructions" sandwich collapsed
   into `instructions()` returning one block instead.
+- `instructions()` is a **mandatory framing constant + optional per-channel text**, not one fully
+  user-editable field. `ChatResponder::FRAMING` (always prepended, never overridable) tells the
+  model the history it's about to read is a shared multi-user window — lines labeled `[username]`,
+  answer only the newest one, don't blend unrelated chatters' threads, don't echo a `[username]`
+  tag back into the reply (the app already prepends one itself when `mention_user` is on) — and
+  carries the hard chat-length limit. A channel's own `user_settings.instructions` (dashboard-
+  editable, defaults to empty) is appended *after* that, for tone/personality only — it can no
+  longer accidentally wipe out the multi-user handling or the length constraint by being cleared
+  or overwritten. Keep `FRAMING`'s wording tight: it's sent as input on every single request, so
+  its length is an ongoing per-request cost, not a one-time one.
+- Automated tests can only prove the *string construction* is correct (framing present, custom
+  text appended correctly, right length number per platform) — `ChatResponder::fake()` returns
+  canned text regardless of what instructions/history it was given, so it can't prove a real model
+  actually *follows* the multi-user framing. That needs a manual smoke test against a real
+  provider key: seed a rolling history with two different `[username]` chatters asking unrelated
+  things (via tinker, matching `ChatResponderTest`'s `putMessageAt()` helper), then send a third
+  message and check the reply answers the newest message, not a blend of both threads.
 - Exception mapping in `CommandController` is built against `laravel/ai`'s actual typed exceptions
   (`InsufficientCreditsException`, `RateLimitedException`, `ProviderConnectionException`,
   `ProviderOverloadedException`) — verified via `Gateway\Concerns\HandlesFailoverErrors`, the

@@ -17,7 +17,7 @@ class UserSettingsFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'instructions' => 'You are a helpful assistant for a Twitch chat. Answer in 250 characters or less.',
+            'instructions' => null,  // optional custom flavor text, appended after ChatResponder's mandatory framing
             'ai_provider' => null,
             'ai_api_key' => null,
             'mention_user' => true,

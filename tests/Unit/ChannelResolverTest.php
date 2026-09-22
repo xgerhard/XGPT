@@ -3,7 +3,7 @@
 use App\Chat\ChannelResolver;
 use App\Models\User;
 
-it('creates a new channel with default settings on first contact', function () {
+it('creates a new channel with empty (optional) settings on first contact', function () {
     $channel = (new ChannelResolver)->resolve('twitch', '123', 'SomeStreamer');
 
     expect($channel)->toBeInstanceOf(User::class)
@@ -12,14 +12,9 @@ it('creates a new channel with default settings on first contact', function () {
         ->and($channel->display_name)->toBe('SomeStreamer')
         ->and($channel->token)->toHaveLength(8)
         ->and($channel->settings)->not->toBeNull()
-        ->and($channel->settings->instructions)->toContain('Twitch chat')
-        ->and($channel->settings->instructions)->toContain('250 characters');
-});
-
-it('gives YouTube channels a shorter default length instruction', function () {
-    $channel = (new ChannelResolver)->resolve('youtube', '456', 'SomeStreamer');
-
-    expect($channel->settings->instructions)->toContain('150 characters');
+        // The mandatory multi-user/length framing lives in ChatResponder, not here — see
+        // ChatResponderTest for that coverage. A fresh channel's own instructions start empty.
+        ->and($channel->settings->instructions)->toBeNull();
 });
 
 it('reuses the same row for a known (provider, provider_id) pair instead of duplicating', function () {

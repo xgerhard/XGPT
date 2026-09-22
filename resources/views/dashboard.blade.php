@@ -52,8 +52,9 @@
         <fieldset>
             <legend>Behavior</legend>
 
-            <label for="instructions">Instructions</label>
-            <textarea name="instructions" id="instructions" rows="3">{{ old('instructions', $settings?->instructions) }}</textarea>
+            <label for="instructions">Personality (optional)</label>
+            <textarea name="instructions" id="instructions" rows="3" placeholder="e.g. Answer like a sarcastic pirate.">{{ old('instructions', $settings?->instructions) }}</textarea>
+            <p><small>The bot already knows how to handle a multi-user chat and keep replies short enough to fit. This is just for extra flavor, tone, or context. It's added on top, not a replacement.</small></p>
 
             <label>
                 <input type="checkbox" name="mention_user" value="1" @checked($settings?->mention_user ?? true)>

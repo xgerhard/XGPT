@@ -11,6 +11,46 @@ function putMessageAt(User $channel, string $role, ?string $username, string $co
     DB::table('messages')->where('id', $message->id)->update(['created_at' => $at, 'updated_at' => $at]);
 }
 
+it('always includes the mandatory multi-user framing and length limit, even with no custom instructions', function () {
+    $channel = User::factory()->create(['provider' => 'twitch']);
+
+    $instructions = (string) (new ChatResponder($channel->fresh()))->instructions();
+
+    expect($instructions)->toContain('[username]')
+        ->and($instructions)->toContain('newest')
+        ->and($instructions)->toContain('250 characters')
+        ->and($instructions)->not->toContain("\n\n"); // nothing appended when there's no custom text
+});
+
+it('gives YouTube channels the shorter length limit in the framing', function () {
+    $channel = User::factory()->create(['provider' => 'youtube']);
+
+    expect((new ChatResponder($channel->fresh()))->instructions())->toContain('150 characters');
+});
+
+it('appends a channel\'s custom instructions after the mandatory framing, never in place of it', function () {
+    $channel = User::factory()
+        ->has(UserSettings::factory()->state(['instructions' => 'Answer like a sarcastic pirate.']), 'settings')
+        ->create(['provider' => 'twitch']);
+
+    $instructions = (string) (new ChatResponder($channel->fresh()))->instructions();
+
+    expect($instructions)->toContain('[username]') // framing still present
+        ->and($instructions)->toContain('250 characters')
+        ->and($instructions)->toContain('Answer like a sarcastic pirate.') // custom text appended
+        ->and($instructions)->toEndWith('Answer like a sarcastic pirate.');
+});
+
+it('ignores a custom instructions field that is only whitespace', function () {
+    $channel = User::factory()
+        ->has(UserSettings::factory()->state(['instructions' => "   \n  "]), 'settings')
+        ->create(['provider' => 'twitch']);
+
+    $instructions = (string) (new ChatResponder($channel->fresh()))->instructions();
+
+    expect($instructions)->not->toContain("\n\n");
+});
+
 it('windows history to the configured minutes and message cap, oldest first', function () {
     config(['xgpt.history.window_minutes' => 5, 'xgpt.history.max_messages' => 10]);
 

@@ -22,9 +22,10 @@ class ChannelResolver
         );
 
         if ($channel->wasRecentlyCreated) {
-            $channel->settings()->create([
-                'instructions' => $this->defaultInstructions($provider),
-            ]);
+            // No default `instructions` to seed here — the multi-user/length-limit framing is
+            // mandatory and always injected by ChatResponder::instructions(), not stored per
+            // channel. This field is purely optional flavor text a streamer can add on top.
+            $channel->settings()->create();
             $channel->load('settings');
         } elseif ($channel->display_name !== $displayName) {
             // Keep display name fresh — streamers do rename.
@@ -32,18 +33,6 @@ class ChannelResolver
         }
 
         return $channel;
-    }
-
-    public function defaultInstructions(string $provider): string
-    {
-        // YouTube chat messages have a much tighter length cap than Twitch/Discord.
-        $length = $provider === 'youtube' ? 150 : 250;
-
-        return sprintf(
-            'You are a helpful assistant for a %s chat. Answer in %d characters or less.',
-            ucfirst($provider),
-            $length,
-        );
     }
 
     private function generateUniqueToken(): string
