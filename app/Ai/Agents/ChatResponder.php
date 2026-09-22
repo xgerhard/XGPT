@@ -64,12 +64,17 @@ class ChatResponder implements Agent, Conversational, HasProviderOptions
     {
         $window = now()->subMinutes((int) config('xgpt.history.window_minutes'));
 
+        // Ordered by id, not created_at: this table's timestamps are whole-second precision,
+        // and a user message + its assistant reply are stored a few milliseconds apart — well
+        // within the same second, so they (and any other messages created in that same second)
+        // tie on created_at. id is a reliable, always-increasing proxy for insertion order that
+        // created_at alone can't guarantee here.
         return $this->channel->messages()
             ->where('created_at', '>=', $window)
-            ->latest('created_at')
+            ->latest('id')
             ->limit((int) config('xgpt.history.max_messages'))
             ->get()
-            ->sortBy('created_at')
+            ->sortBy('id')
             ->values()
             ->map(fn ($message) => new Message(
                 $message->role,

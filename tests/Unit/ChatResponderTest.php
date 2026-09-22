@@ -67,6 +67,25 @@ it('sends no OpenAI-specific reasoning options to a different provider', functio
     expect($responder->providerOptions('anthropic'))->toBe([]);
 });
 
+it('keeps correct order even when every row ties on created_at (whole-second precision)', function () {
+    $channel = User::factory()->create();
+    $now = now(); // every row below gets this exact same timestamp, on purpose
+
+    putMessageAt($channel, 'user', 'alice', 'first question', $now);
+    putMessageAt($channel, 'assistant', null, 'first answer', $now);
+    putMessageAt($channel, 'user', 'alice', 'second question', $now);
+    putMessageAt($channel, 'assistant', null, 'second answer', $now);
+
+    $messages = (new ChatResponder($channel->fresh()))->messages();
+
+    expect(collect($messages)->map(fn ($m) => $m->content)->all())->toBe([
+        '[alice] first question',
+        'first answer',
+        '[alice] second question',
+        'second answer',
+    ]);
+});
+
 it('windows history to the configured minutes and message cap, oldest first', function () {
     config(['xgpt.history.window_minutes' => 5, 'xgpt.history.max_messages' => 10]);
 
