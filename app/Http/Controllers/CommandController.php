@@ -83,13 +83,17 @@ class CommandController extends Controller
                 return 'XGPT has reached its free daily usage limit. Add your own API key in the dashboard to keep going: https://xgpt.gerhard.dev/dashboard';
             }
 
+            // Prompted before it's stored: ChatResponder::messages() reads this table fresh at
+            // call time, and laravel/ai always appends the prompt() text as its own final message
+            // on top of that history — storing first would make the newest message appear twice
+            // in the request sent to the provider.
+            $response = $responder->prompt($incoming->message);
+
             $channel->messages()->create([
                 'role' => 'user',
                 'username' => $incoming->username,
                 'content' => $incoming->message,
             ]);
-
-            $response = $responder->prompt($incoming->message);
 
             return $this->deliver($channel, $incoming, $bot, (string) $response);
         } catch (RuntimeException) {

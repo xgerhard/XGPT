@@ -141,6 +141,24 @@ it('refuses to deliver the overflow message to a spoofed, non-Nightbot response 
     Http::assertNothingSent();
 });
 
+it('prompts the agent before storing the incoming message, so it is not sent twice', function () {
+    $countWhenPrompted = null;
+
+    ChatResponder::fake(function () use (&$countWhenPrompted) {
+        // Runs synchronously partway through prompt(), after ChatResponder::messages() has
+        // already been queried for this same request — so this count reflects exactly what
+        // that query saw.
+        $countWhenPrompted = Message::count();
+
+        return 'a reply';
+    });
+
+    $this->withHeaders(nightbotHeaders(providerId: '741'))->get('/api/command?q=hello');
+
+    expect($countWhenPrompted)->toBe(0)
+        ->and(Message::count())->toBe(2); // stored after: 1 user message, 1 assistant reply
+});
+
 it('does not spend the free-tier budget for a BYO-key channel', function () {
     config(['xgpt.free_tier.daily_request_limit' => 1]);
     ChatResponder::fake(['byo key reply', 'still within free tier', 'exhausted']);
