@@ -3,6 +3,8 @@
 use App\Ai\Agents\ChatResponder;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Http\Client\Request as HttpClientRequest;
+use Illuminate\Support\Facades\Http;
 
 function nightbotHeaders(string $providerId = '999', string $username = 'chatter', string $userLevel = 'everyone'): array
 {
@@ -89,6 +91,53 @@ it('stops serving the free tier once the daily budget is exhausted', function ()
 
     $this->withHeaders(nightbotHeaders(providerId: '555'))->get('/api/command?q=one')->assertSee('ok', false);
     $this->withHeaders(nightbotHeaders(providerId: '666'))->get('/api/command?q=two')->assertSee('daily usage limit', false);
+});
+
+it('splits an over-length reply: trims the first message and defers the rest via Nightbot-Response-Url', function () {
+    Http::fake([
+        'api.nightbot.tv/*' => Http::response(['status' => 'ok']),
+    ]);
+
+    $longReply = str_repeat('a', 500);
+    ChatResponder::fake([$longReply]);
+
+    $headers = nightbotHeaders(providerId: '321', username: 'Y');
+    $headers['Nightbot-Response-Url'] = 'https://api.nightbot.tv/1/commands/overflow-test';
+
+    $response = $this->withHeaders($headers)->get('/api/command?q=hi');
+
+    // First message: mention + as much of the reply as fits in 399 chars, ending in "...".
+    $first = $response->getContent();
+    expect(strlen($first))->toBe(399)
+        ->and($first)->toStartWith('Y: ')
+        ->and($first)->toEndWith('...');
+
+    // Second message: deferred, sent to Nightbot's own response URL only — never an
+    // attacker-controlled host (see NightbotBotProvider::safeResponseUrl()).
+    Http::assertSentCount(1);
+    Http::assertSent(fn (HttpClientRequest $request) => $request->url() === 'https://api.nightbot.tv/1/commands/overflow-test'
+        && str_starts_with($request['message'], 'a')
+    );
+
+    // The full reply (both halves combined) is what's stored for history, not just the
+    // first message's truncated-with-ellipsis text.
+    $channel = User::where('provider_id', '321')->firstOrFail();
+    $stored = Message::where('user_id', $channel->id)->where('role', 'assistant')->first();
+    expect(strlen($stored->content))->toBe(500)
+        ->and($stored->content)->toBe($longReply);
+});
+
+it('refuses to deliver the overflow message to a spoofed, non-Nightbot response URL', function () {
+    Http::fake();
+
+    ChatResponder::fake([str_repeat('a', 500)]);
+
+    $headers = nightbotHeaders(providerId: '654');
+    $headers['Nightbot-Response-Url'] = 'https://attacker.example.com/collect';
+
+    $this->withHeaders($headers)->get('/api/command?q=hi');
+
+    Http::assertNothingSent();
 });
 
 it('does not spend the free-tier budget for a BYO-key channel', function () {

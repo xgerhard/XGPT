@@ -63,6 +63,42 @@ let an exception escape — `CommandController::run` wraps the entire body in on
 every failure mode (ours and `laravel/ai`'s typed exceptions) to a chat-readable sentence. New
 failure modes should follow that pattern; this is deliberately broad, not sloppy.
 
+### The overflow (two-message) delivery, and why it's sync-by-default
+
+`CommandController::deliver()` returns the reply as the direct HTTP response whenever it fits in
+one chat message. Only when it doesn't does it fall back to Nightbot's `Nightbot-Response-Url`
+mechanism (POST the rest of the message, deferred to after the response via the terminable
+`App\Http\Middleware\DeliverOverflowMessage`, matching the pre-rewrite `CommandMiddleware`) — see
+`App\Chat\Providers\NightbotBotProvider::safeResponseUrl()` for why that URL is host-allowlisted
+first.
+
+**This split is deliberate, not incidental — don't "simplify" it into always answering via the
+response-URL.** The two delivery paths have a real asymmetry: the synchronous `urlfetch` response
+Nightbot is already fetching has no Nightbot-side rate limit at all (client-side cooldown on the
+command is the only throttle); the response-URL POST is a privileged, OAuth-scoped write into
+Nightbot's chat pipeline, and *that* one is rate-limited on Nightbot's end. Answering synchronously
+by default and only escalating to the response-URL when a reply genuinely doesn't fit keeps that
+rate-limited path rare — every command invocation across every channel hitting it (a fully
+queue/async design would do exactly that) is a fast way to get throttled by Nightbot itself, which
+fails silently (a reply just never shows up) and is worse than an occasional slow-provider timeout,
+which at least returns a visible, self-explanatory error string.
+
+The same "escalate only when forced to" principle could, in theory, extend to *time* as well as
+*length* — race the AI call against a deadline shorter than Nightbot's own `urlfetch` timeout, and
+only fall back to the response-URL path if that's actually blown, reusing this same mechanism.
+Deliberately not built pre-emptively: the cost is a PHP-FPM worker sitting busy for the duration of
+that background call, unable to serve anything else, which is only worth paying if slow-provider
+timeouts turn out to be a real, observed problem — not a hypothetical one.
+
+**Known wart, not a mistake**: the hand-off from `CommandController` to the terminable middleware
+uses `session(['xgpt_overflow' => ...])` as a same-request mailbox, not actual cross-request
+session state. It works (verified: the session store is a container-scoped singleton that survives
+for one request's lifetime even without `StartSession` in the `api` middleware group) but it's
+non-obvious *why* it works, and a well-meaning change to session handling elsewhere could break the
+assumption without anyone noticing. An explicit `$request->attributes->set(...)` would say the same
+thing without borrowing a mechanism named for something else — worth doing if this area gets
+touched again, not urgent enough to justify a change on its own.
+
 ## Bot-provider abstraction
 
 `App\Chat\Contracts\BotProvider` (`matches()`/`parse()`) is implemented today only by
