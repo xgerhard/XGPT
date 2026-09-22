@@ -2,174 +2,83 @@
 
 namespace App\Http\Controllers;
 
+use App\Chat\Providers\NightbotApiClient;
+use App\Chat\Providers\NightbotBotProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Contracts\Encryption\DecryptException;
-use App\src\NightbotAPI;
-use App\src\SettingsHandler;
-use Log;
-use Exception;
-use Session;
+use Illuminate\Support\Facades\Session;
 
 class DashboardController extends Controller
 {
-
-    public function __construct()
+    public function index(NightbotBotProvider $nightbot)
     {
-        
-    }
-
-    public function index()
-    {
-        // Set default settings for new users
-        if (!Auth::user()->settings()->exists()) {
-            $this->setDefaultSettings();
-        }
-
-        // Logout if no Nightbot session is found
         $token = session('nightbot_api_token');
-        if (!$token) {
-            return redirect('/logout');
+
+        if (! $token) {
+            return redirect()->route('logout');
         }
 
-        // $user = Auth::user();
-        $nightbotApi = new NightbotAPI;
-        $nightbotApi->setAccessToken($token);
-        $commands = $nightbotApi->getCustomCommands();
-        $installedCommands = [];
+        $commands = (new NightbotApiClient)->setAccessToken($token)->getCustomCommands();
+        $expectedUrl = $nightbot->commandSnippet(Auth::user());
 
-        $commandNeedsToken = false;
-        if (isset($commands['commands']) and !empty($commands['commands'])) {
-            foreach ($commands['commands'] as $command) {
-                if (str_contains($command['message'], '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)')) {
-                    $installedCommands[] = $command;
+        $installedCommands = array_values(array_filter(
+            $commands['commands'] ?? [],
+            fn (array $command) => str_contains($command['message'], NightbotBotProvider::COMMAND_URL),
+        ));
 
-                    // Validate if token parameter is present when users use own API key
-                    if (Auth::user()->settings->api_key && trim(Auth::user()->settings->api_key != '')) {
-                        if (!str_contains($command['message'], '&token='. Auth::user()->token .')')) {
-                            $commandNeedsToken = true;
-                        }
-                    }
-                }
-            }
-        }
+        $commandNeedsUpdate = ! empty($installedCommands)
+            && ! collect($installedCommands)->contains(fn ($command) => $command['message'] === $expectedUrl);
 
         return view('dashboard', [
             'commands' => $installedCommands,
-            'command_needs_token' => $commandNeedsToken
+            'commandNeedsUpdate' => $commandNeedsUpdate,
+            'commandSnippet' => $expectedUrl,
+            'enabledProviders' => config('xgpt.enabled_providers'),
         ]);
     }
 
-    public function save(Request $request)
+    public function save(Request $request, NightbotBotProvider $nightbot)
     {
-        if ($request->has('action')) {
+        if ($request->has('install_command')) {
             $token = session('nightbot_api_token');
-            if (!$token) {
-                return redirect('/logout');
+
+            if (! $token) {
+                return redirect()->route('logout');
             }
 
-            switch ($request->post('action')) {
-                case 'install_command':
-                    if ($request->has('command_code')) {
-                        $commandCode = $request->post('command_code');
-                        if (trim($commandCode) != '') {
-                            $this->installNightbotCommand($commandCode);
-                        }
-                    }
-                break;
+            $nightbot->install(Auth::user(), $token);
 
-                case 'update_commands':
-                    $this->updateNightbotCommands();
-                break;
-            }
-        } elseif ($request->has('save_settings')) {
-            Session::flash('message', 'Succesfully saved your settings!');
-            Session::flash('alert-class', 'callout-block-success'); 
+            Session::flash('message', 'Command installed/updated!');
+            Session::flash('alert-class', 'callout-block-success');
 
-            try {
-                $user = Auth::user();
-                $user->settings()->updateOrCreate([
-                    'user_id' => $user->id
-                ], [
-                    'api_key' => $request->post('api_key') ? Crypt::encryptString($request->post('api_key')) : '',
-                    'start_instructions' => $request->post('start_instructions'),
-                    'end_instructions' => $request->post('end_instructions'),
-                    'show_conversation_id' => $request->has('show_conversation_id'),
-                    'mention_user' => $request->has('mention_user'),
-                    'show_sponsor_heart' => $request->has('show_sponsor_heart')
-                ]);
-
-                Auth::user()->update(['sponsor' => $request->post('api_key') ? 1 : 0]);
-            } catch (Exception $e) {
-                Session::flash('message', 'Something went wrong.. please try again later.');
-                Session::flash('alert-class', 'callout-block-danger'); 
-            }
+            return redirect()->route('dashboard');
         }
 
-        return redirect('/dashboard');
-    }
+        $providers = collect(config('xgpt.enabled_providers'))->pluck('key');
 
-    private function setDefaultSettings()
-    {
+        $validated = $request->validate([
+            'instructions' => ['nullable', 'string', 'max:2000'],
+            'ai_provider' => ['nullable', 'string', 'in:'.$providers->implode(',')],
+            'ai_api_key' => ['nullable', 'string', 'max:500'],
+        ]);
+
         $user = Auth::user();
-        $settings = new SettingsHandler;
-        $settings->setDefaultSettings($user);
-        Auth::setUser($user->fresh());
-    }
 
-    private function updateNightbotCommands()
-    {
-        $token = session('nightbot_api_token');
-        if (!$token) {
-            return redirect('/logout');
-        }
+        $user->settings()->updateOrCreate(['user_id' => $user->id], [
+            'instructions' => $validated['instructions'] ?? null,
+            'ai_provider' => $validated['ai_provider'] ?? null,
+            // Only overwrite the stored key when a new one is actually submitted — an empty
+            // field means "keep what's saved", not "clear it".
+            ...($request->filled('ai_api_key') ? ['ai_api_key' => $validated['ai_api_key']] : []),
+            'mention_user' => $request->boolean('mention_user'),
+            'show_sponsor_heart' => $request->boolean('show_sponsor_heart'),
+        ]);
 
-        $nightbotApi = new NightbotAPI;
-        $nightbotApi->setAccessToken($token);
-        $commands = $nightbotApi->getCustomCommands();
+        $user->update(['sponsor' => (bool) $validated['ai_provider']]);
 
-        if (isset($commands['commands']) and !empty($commands['commands'])) {
-            foreach ($commands['commands'] as $command) {
-                if (str_contains($command['message'], '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)')) {
-                    // Update command
-                    $nightbotApi->editCustomCommand($command['_id'], [
-                        'message' => '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)&token='. Auth::user()->token .')'
-                    ]);
-                }
-            }
-        }
-    }
+        Session::flash('message', 'Successfully saved your settings!');
+        Session::flash('alert-class', 'callout-block-success');
 
-    private function installNightbotCommand($commandCode)
-    {
-        $token = session('nightbot_api_token');
-        if (!$token) {
-            return redirect('/logout');
-        }
-
-        $nightbotApi = new NightbotAPI;
-        $nightbotApi->setAccessToken($token);
-        $commands = $nightbotApi->getCustomCommands();
-
-        $commandData = [
-            'coolDown' => 5,
-            'message' => '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)&token='. Auth::user()->token .')',
-            'name' => $commandCode,
-            'userLevel' => 'everyone'
-        ];
-
-        if (isset($commands['commands']) and !empty($commands['commands'])) {
-            foreach ($commands['commands'] as $command) {
-                if ($command['name'] == $commandCode) {
-                    // Update command
-                    $nightbotApi->editCustomCommand($command['_id'], $commandData);
-                    return;
-                }
-            }
-
-            // Create new command
-            $nightbotApi->addCustomCommand($commandData);
-        }
+        return redirect()->route('dashboard');
     }
 }

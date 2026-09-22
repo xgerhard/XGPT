@@ -2,42 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Laravel\Socialite\Facades\Socialite;
-use Illuminate\Support\Facades\Auth;
+use App\Chat\ChannelResolver;
 use Illuminate\Http\RedirectResponse;
-use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Laravel\Socialite\Facades\Socialite;
 
 class NightbotAuthController extends Controller
 {
-    public function redirectToProvider()
+    public function redirectToProvider(): RedirectResponse
     {
         return Socialite::driver('nightbot')->redirect();
     }
 
-    public function handleProviderCallback()
+    public function handleProviderCallback(ChannelResolver $channels): RedirectResponse
     {
         $nightbotUser = Socialite::driver('nightbot')->user();
 
-        $user = User::where([
-            ['provider', '=', $nightbotUser['provider']],
-            ['provider_id', '=', $nightbotUser['providerId']]
-        ])->first();
+        $channel = $channels->resolve(
+            $nightbotUser['provider'],
+            $nightbotUser['providerId'],
+            $nightbotUser['displayName'],
+        );
 
-        if (!$user) {
-            $user = User::create([
-                'name' => $nightbotUser['name'],
-                'display_name' => $nightbotUser['displayName'],
-                'provider' => $nightbotUser['provider'],
-                'provider_id' => $nightbotUser['providerId'],
-                'token' => $this->generateToken()
-            ]);
-        }
+        Auth::login($channel);
 
-        Auth::login($user);
+        // Only ever kept in session, never persisted — see App\Http\Controllers\
+        // DashboardController and CLAUDE.md's security notes on why.
         session(['nightbot_api_token' => $nightbotUser->token]);
 
-        return redirect('/dashboard');
+        return redirect()->route('dashboard');
     }
 
     public function logout(Request $request): RedirectResponse
@@ -47,19 +41,5 @@ class NightbotAuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
-    }
-
-    private function generateToken()
-    {
-        while (true) {
-            $string = generate_random_string(
-                8 // length
-            );
-
-            $user = User::where('token', $string)->first();
-            if (!$user) {
-                return $string;
-            }
-        }
     }
 }

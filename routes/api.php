@@ -1,23 +1,18 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CommandController;
-use App\Http\Middleware\CommandMiddleware;
+use App\Http\Middleware\DeliverOverflowMessage;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
+| Public contract, do not change: bots (currently Nightbot) are already configured against
+| GET /api/command?q=...&token=... in the wild.
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-Route::get('/command', [CommandController::class, 'run'])->middleware(CommandMiddleware::class);
+Route::get('/command', [CommandController::class, 'run'])
+    ->middleware(['throttle:chat-command-ip', DeliverOverflowMessage::class]);
