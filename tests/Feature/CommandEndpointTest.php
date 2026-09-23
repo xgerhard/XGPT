@@ -277,3 +277,34 @@ it('limits per caller IP from Cloudflare\'s CF-Connecting-IP header', function (
     $fromCaller('198.51.100.2')->get('/api/command?q=hi')->assertSee('b', false);
     $fromCaller('198.51.100.1')->get('/api/command?q=hi')->assertSee('lot of requests', false);
 });
+
+it('strips a length instruction appended to the query by an older command setup', function (string $query) {
+    ChatResponder::fake(['a reply']);
+
+    $this->withHeaders(nightbotHeaders(providerId: '1100'))->get("/api/command?q={$query}");
+
+    expect(Message::where('role', 'user')->value('content'))->toBe('what is a cat');
+})->with([
+    'plain' => ['what%20is%20a%20cat%20answer%20in%20150%20characters%20or%20less'],
+    'doubled %% encoding' => ['what%20is%20a%20cat%20answer%20in%20150%%2020characters%20or%20less'],
+    'truncated "les"' => ['what%20is%20a%20cat%20answer%20in%20150%%2020characters%20or%20les'],
+    'capitalised with a period' => ['what%20is%20a%20cat%20Answer%20in%20200%20characters%20or%20less.'],
+    'keep all replies under' => ['what%20is%20a%20cat%20keep%20all%20replies%20under%20150%20characters.'],
+]);
+
+it('keeps a length request that is part of the actual question', function () {
+    ChatResponder::fake(['a reply']);
+
+    $this->withHeaders(nightbotHeaders(providerId: '1101'))
+        ->get('/api/command?q=can%20you%20answer%20in%20150%20characters%20or%20less%20about%20cats');
+
+    expect(Message::where('role', 'user')->value('content'))
+        ->toBe('can you answer in 150 characters or less about cats');
+});
+
+it('treats a query that is only the length instruction as empty', function () {
+    $response = $this->withHeaders(nightbotHeaders(providerId: '1102'))
+        ->get('/api/command?q=answer%20in%20150%20characters%20or%20less');
+
+    expect(CommandController::NO_QUERY_REPLIES)->toContain($response->getContent());
+});

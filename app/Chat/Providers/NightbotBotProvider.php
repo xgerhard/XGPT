@@ -21,6 +21,15 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
 
     private const USER_FIELDS = ['name', 'displayName', 'provider', 'providerId', 'userLevel'];
 
+    /**
+     * A length instruction some channels still have appended to the query in their Nightbot
+     * command: "answer in 150 characters or less" (including the "150% 20characters" form a
+     * doubled "%%20" in the command decodes to) or "keep all replies under 150 characters".
+     * Length is handled by ChatResponder's framing.
+     */
+    private const LENGTH_INSTRUCTION = '/\s*(?:answer\s+in\s+\d+\s*%?\s*(?:20)?char(?:acter)?s?\s+or\s+(?:less?|fewer)'
+        .'|keep\s+(?:all\s+)?(?:replies|answers|responses)\s+under\s+\d+\s*char(?:acter)?s?)\s*[.!]?\s*$/i';
+
     private ?array $headers = null;
 
     public function key(): string
@@ -51,7 +60,7 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
             userProvider: $user['provider'] ?? null,
             userProviderId: $user['providerId'] ?? null,
             userLevel: $user['userLevel'] ?? null,
-            message: (string) $request->query('q', ''),
+            message: trim(preg_replace(self::LENGTH_INSTRUCTION, '', (string) $request->query('q', ''))),
             responseUrl: $this->safeResponseUrl($responseUrl),
         );
     }
