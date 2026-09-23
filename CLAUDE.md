@@ -128,7 +128,7 @@ another bot integration, follow the same pattern.
 ## Security notes (read before touching auth/rate-limiting/provider code)
 
 **Nightbot requests have no cryptographic verification** — `NightbotBotProvider::matches()` only
-checks that a `Nightbot-Channel` header is present and parseable. Anyone can spoof any channel's identity by
+checks that the `Nightbot-Channel` header (and `Nightbot-User`, when sent) carries all its fields. Anyone can spoof any channel's identity by
 hand-crafting that header on a raw request to the public endpoint. Consequences already designed
 around this:
 

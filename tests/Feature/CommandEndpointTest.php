@@ -23,6 +23,33 @@ it('rejects a request with no Nightbot headers at all', function () {
         ->assertSee('Only Nightbot requests allowed.', false);
 });
 
+it('rejects incomplete Nightbot headers', function (array $headers) {
+    $this->withHeaders($headers)
+        ->get('/api/command?q=hello')
+        ->assertOk()
+        ->assertSee('Only Nightbot requests allowed.', false);
+})->with([
+    'channel missing name' => [[
+        'Nightbot-Channel' => 'displayName=SomeChannel&provider=twitch&providerId=999',
+    ]],
+    'channel with unrelated fields only' => [[
+        'Nightbot-Channel' => 'foo=bar',
+    ]],
+    'user missing userLevel' => [[
+        'Nightbot-Channel' => 'name=somechannel&displayName=SomeChannel&provider=twitch&providerId=999',
+        'Nightbot-User' => 'name=chatter&displayName=chatter&provider=twitch&providerId=1',
+    ]],
+]);
+
+it('accepts a timer request, which has no Nightbot-User header', function () {
+    ChatResponder::fake(['timer reply']);
+
+    $this->withHeaders(['Nightbot-Channel' => 'name=somechannel&displayName=SomeChannel&provider=twitch&providerId=999'])
+        ->get('/api/command?q=hello')
+        ->assertOk()
+        ->assertSee('timer reply', false);
+});
+
 it('asks for a query when q is missing or empty, with one of the varied replies', function () {
     $response = $this->withHeaders(nightbotHeaders())->get('/api/command');
 

@@ -17,6 +17,10 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
      */
     public const COMMAND_URL = 'https://xgpt.gerhard.dev/api/command?q=$(querystring)';
 
+    private const CHANNEL_FIELDS = ['name', 'displayName', 'provider', 'providerId'];
+
+    private const USER_FIELDS = ['name', 'displayName', 'provider', 'providerId', 'userLevel'];
+
     private ?array $headers = null;
 
     public function key(): string
@@ -26,7 +30,12 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
 
     public function matches(Request $request): bool
     {
-        return $this->headers($request)['channel'] !== null;
+        ['user' => $user, 'channel' => $channel] = $this->headers($request);
+
+        // Only a shape check: the headers are still spoofable. Nightbot-User is absent on timer
+        // messages, but when it's sent it must be complete too.
+        return $this->hasFields($channel, self::CHANNEL_FIELDS)
+            && ($user === null || $this->hasFields($user, self::USER_FIELDS));
     }
 
     public function parse(Request $request): IncomingMessage
@@ -121,6 +130,17 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
         ];
     }
 
+    private function hasFields(?array $header, array $fields): bool
+    {
+        foreach ($fields as $field) {
+            if (! filled($header[$field] ?? null)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /**
      * Nightbot-User / Nightbot-Channel are query-string-encoded (e.g. "name=x&displayName=x&
      * provider=twitch&providerId=1").
@@ -139,8 +159,8 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
     }
 
     /**
-     * Nightbot's headers carry no cryptographic verification — matches() only checks that a
-     * Nightbot-Channel header is present — so Nightbot-Response-Url is attacker-controlled on a
+     * Nightbot's headers carry no cryptographic verification — matches() only checks that the
+     * headers are well-formed — so Nightbot-Response-Url is attacker-controlled on a
      * spoofed request. Only Nightbot's own API
      * host is ever forwarded to, to avoid an open SSRF relay.
      */
