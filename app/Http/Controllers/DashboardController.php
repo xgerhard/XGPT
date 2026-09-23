@@ -62,6 +62,7 @@ class DashboardController extends Controller
             'instructions' => ['nullable', 'string', 'max:2000'],
             'ai_provider' => ['nullable', 'string', 'in:'.$providers->implode(',')],
             'ai_api_key' => ['nullable', 'string', 'max:500'],
+            'daily_request_limit' => ['nullable', 'integer', 'min:1', 'max:1000000'],
         ]);
 
         $user->settings()->updateOrCreate(['user_id' => $user->id], [
@@ -70,11 +71,12 @@ class DashboardController extends Controller
             // Only overwrite the stored key when a new one is actually submitted — an empty
             // field means "keep what's saved", not "clear it".
             ...($request->filled('ai_api_key') ? ['ai_api_key' => $validated['ai_api_key']] : []),
+            'daily_request_limit' => $validated['daily_request_limit'] ?? null,
             'mention_user' => $request->boolean('mention_user'),
             'show_sponsor_heart' => $request->boolean('show_sponsor_heart'),
         ]);
 
-        $user->update(['sponsor' => (bool) $validated['ai_provider']]);
+        $user->update(['sponsor' => (bool) ($validated['ai_provider'] ?? null)]);
 
         Session::flash('message', 'Successfully saved your settings!');
         Session::flash('alert-class', 'callout-block-success');

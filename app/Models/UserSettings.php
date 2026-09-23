@@ -19,6 +19,7 @@ class UserSettings extends Model
         'ai_api_key',
         'mention_user',
         'show_sponsor_heart',
+        'daily_request_limit',
     ];
 
     // ai_api_key is encrypted, but it's still ciphertext of a live secret — never let it leak
@@ -30,6 +31,7 @@ class UserSettings extends Model
         return [
             'mention_user' => 'boolean',
             'show_sponsor_heart' => 'boolean',
+            'daily_request_limit' => 'integer',
         ];
     }
 

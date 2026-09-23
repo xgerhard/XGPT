@@ -80,3 +80,28 @@ it('keeps the saved API key when the field is left blank on a later save', funct
 
     expect($channel->settings()->first()->decrypted_ai_api_key)->toBe('sk-original-key');
 });
+
+it('saves an optional daily reply limit', function () {
+    $channel = User::factory()->create();
+
+    $this->actingAs($channel)->post('/dashboard', [
+        'save_settings' => '1',
+        'daily_request_limit' => '250',
+    ])->assertRedirect(route('dashboard'));
+
+    expect($channel->settings()->firstOrFail()->daily_request_limit)->toBe(250);
+
+    $this->actingAs($channel)->post('/dashboard', [
+        'save_settings' => '1',
+        'daily_request_limit' => '',
+    ]);
+
+    expect($channel->settings()->firstOrFail()->daily_request_limit)->toBeNull();
+});
+
+it('rejects a daily reply limit below 1', function () {
+    $this->actingAs(User::factory()->create())
+        ->from('/dashboard')
+        ->post('/dashboard', ['save_settings' => '1', 'daily_request_limit' => '0'])
+        ->assertSessionHasErrors('daily_request_limit');
+});

@@ -223,3 +223,57 @@ it('does not spend the free-tier budget for a BYO-key channel', function () {
         ->get('/api/command?q=three')
         ->assertSee('daily usage limit', false);
 });
+
+it('stops an own-key channel at its daily limit, counting only token-verified requests', function () {
+    ChatResponder::fake(['first reply', 'should not be reached']);
+
+    $channel = User::factory()->create(['provider' => 'twitch', 'provider_id' => '1001', 'token' => 'TOKEN1001']);
+    $channel->settings()->create(['ai_provider' => 'openai', 'ai_api_key' => 'sk-real-key', 'daily_request_limit' => 1]);
+
+    // A request with a wrong token is rejected before it can use up the limit.
+    $this->withHeaders(nightbotHeaders(providerId: '1001'))
+        ->get('/api/command?q=hi&token=WRONG')
+        ->assertSee('token is missing', false);
+
+    $this->withHeaders(nightbotHeaders(providerId: '1001'))
+        ->get('/api/command?q=hi&token=TOKEN1001')
+        ->assertSee('first reply', false);
+
+    $this->withHeaders(nightbotHeaders(providerId: '1001'))
+        ->get('/api/command?q=again&token=TOKEN1001')
+        ->assertSee('reached its daily XGPT limit', false);
+});
+
+it('ignores a daily limit on a free-tier channel', function () {
+    ChatResponder::fake(['one', 'two']);
+
+    $channel = User::factory()->create(['provider' => 'twitch', 'provider_id' => '1002']);
+    $channel->settings()->create(['daily_request_limit' => 1]);
+
+    $this->withHeaders(nightbotHeaders(providerId: '1002'))->get('/api/command?q=hi')->assertSee('one', false);
+    $this->withHeaders(nightbotHeaders(providerId: '1002'))->get('/api/command?q=hi')->assertSee('two', false);
+});
+
+it('answers the per-IP throttle with a plain chat sentence instead of an error page', function () {
+    config(['xgpt.rate_limit.per_ip_per_minute' => 1]);
+    ChatResponder::fake(['ok']);
+
+    $this->withHeaders(nightbotHeaders(providerId: '1003'))->get('/api/command?q=hi')->assertSee('ok', false);
+
+    $response = $this->withHeaders(nightbotHeaders(providerId: '1004'))->get('/api/command?q=hi');
+
+    $response->assertOk()->assertHeader('Content-Type', 'text/plain; charset=UTF-8');
+    expect($response->getContent())->toBe('XGPT is getting a lot of requests right now. Try again in a moment.');
+});
+
+it('limits per caller IP from Cloudflare\'s CF-Connecting-IP header', function () {
+    config(['xgpt.rate_limit.per_ip_per_minute' => 1]);
+    ChatResponder::fake(['a', 'b']);
+
+    $fromCaller = fn (string $ip) => $this->withHeaders([...nightbotHeaders(providerId: '1005'), 'CF-Connecting-IP' => $ip]);
+
+    // Every request arrives from the same Cloudflare edge, but each caller gets its own bucket.
+    $fromCaller('198.51.100.1')->get('/api/command?q=hi')->assertSee('a', false);
+    $fromCaller('198.51.100.2')->get('/api/command?q=hi')->assertSee('b', false);
+    $fromCaller('198.51.100.1')->get('/api/command?q=hi')->assertSee('lot of requests', false);
+});

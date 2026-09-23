@@ -138,14 +138,17 @@ class ChatResponder implements Agent, Conversational, HasProviderOptions
         };
     }
 
-    private function usingOwnKey(): bool
+    /**
+     * Whether this channel's replies run on its own key rather than the site's free tier. The
+     * single source of truth for that — CommandController's token gate and daily limits use it too.
+     */
+    public function usingOwnKey(): bool
     {
         $settings = $this->channel->settings;
 
         return (bool) ($settings
             && $settings->ai_provider
             && $settings->ai_provider === $this->allowlistedProvider()['key']
-            && $settings->ai_provider !== $this->freeTierProvider()['key']
             && $settings->decrypted_ai_api_key);
     }
 

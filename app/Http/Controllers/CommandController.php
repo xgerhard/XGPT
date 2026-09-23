@@ -8,7 +8,7 @@ use App\Chat\ChannelResolver;
 use App\Chat\Contracts\SupportsAutoInstall;
 use App\Exceptions\InvalidTokenException;
 use App\Models\User;
-use App\Support\FreeTierBudgetGuard;
+use App\Support\DailyRequestBudget;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -48,7 +48,7 @@ class CommandController extends Controller
         Request $request,
         BotProviderRegistry $registry,
         ChannelResolver $channels,
-        FreeTierBudgetGuard $budgetGuard,
+        DailyRequestBudget $budget,
     ) {
         $channel = null;
 
@@ -61,9 +61,10 @@ class CommandController extends Controller
             }
 
             // Per-channel throttle, keyed by the *claimed* identity. Nightbot's headers carry no
-            // cryptographic proof of origin (see NightbotBotProvider::matches()), so an attacker can rotate the claimed provider_id to dodge
-            // this; it bounds damage from a single spoofed identity, it isn't the only control.
-            // See the route-level per-IP throttle for the coarser backstop.
+            // cryptographic proof of origin (see NightbotBotProvider::matches()), so an attacker
+            // can rotate the claimed provider_id to dodge this; it bounds damage from a single
+            // spoofed identity, it isn't the only control. See the route-level per-IP throttle
+            // for the coarser backstop.
             $channelRateLimitKey = "chat-command:{$incoming->provider}:{$incoming->providerId}";
 
             if (RateLimiter::tooManyAttempts($channelRateLimitKey, (int) config('xgpt.rate_limit.per_channel_per_minute'))) {
@@ -74,11 +75,19 @@ class CommandController extends Controller
 
             $channel = $channels->resolve($incoming->provider, $incoming->providerId, $incoming->channelDisplayName);
 
-            $this->guardToken($channel, $request);
-
             $responder = new ChatResponder($channel);
 
-            if (! $this->usingOwnKey($channel) && ! $budgetGuard->consume()) {
+            if ($responder->usingOwnKey()) {
+                $this->guardToken($channel, $request);
+
+                // Counted only after the token check, so only token holders can use up a
+                // channel's own limit.
+                $dailyLimit = $channel->settings->daily_request_limit;
+
+                if ($dailyLimit && ! $budget->consume("channel:{$channel->id}", $dailyLimit)) {
+                    return 'This channel has reached its daily XGPT limit. It resets at midnight UTC.';
+                }
+            } elseif (! $budget->consume('free-tier', (int) config('xgpt.free_tier.daily_request_limit'))) {
                 return 'XGPT has reached its free daily usage limit. Add your own API key in the dashboard to keep going: https://xgpt.gerhard.dev/dashboard';
             }
 
@@ -129,23 +138,14 @@ class CommandController extends Controller
     }
 
     /**
-     * Token-gate a channel once it's set its own AI key (unset on the free tier by design — see
-     * config/xgpt.php and the Security & abuse-prevention notes in CLAUDE.md).
+     * Token-gate a channel that uses its own AI key (free-tier channels need no token by design —
+     * see the security notes in CLAUDE.md).
      */
     private function guardToken(User $channel, Request $request): void
     {
-        if (! $this->usingOwnKey($channel)) {
-            return;
-        }
-
         if (! $request->has('token') || $request->get('token') !== $channel->token) {
             throw new InvalidTokenException;
         }
-    }
-
-    private function usingOwnKey(User $channel): bool
-    {
-        return (bool) ($channel->settings?->ai_provider && $channel->settings?->decrypted_ai_api_key);
     }
 
     /**

@@ -43,8 +43,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Coarse per-IP backstop on /api/command, independent of the per-channel limiter inside
         // CommandController (which is keyed by a claimed, spoofable identity — see there).
+        // Production sits behind Cloudflare, so the caller's IP is in CF-Connecting-IP; the
+        // connection itself always comes from a Cloudflare edge server.
         RateLimiter::for('chat-command-ip', fn (Request $request) => Limit::perMinute(
             (int) config('xgpt.rate_limit.per_ip_per_minute')
-        )->by($request->ip()));
+        )->by($request->header('CF-Connecting-IP') ?: $request->ip()));
     }
 }

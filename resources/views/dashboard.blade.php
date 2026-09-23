@@ -44,6 +44,11 @@
             <div id="ai_api_key_field" @if (! $settings?->ai_provider) hidden @endif>
                 <label for="ai_api_key">API key</label>
                 <input type="password" name="ai_api_key" id="ai_api_key" placeholder="{{ $settings?->ai_provider ? 'Leave blank to keep your saved key' : '' }}">
+                <p><small><strong>Set a spending limit with your AI provider.</strong> It's the only cap that's fully guaranteed. XGPT has its own safeguards, but chat commands can't be fully verified, and anyone who gets hold of your command URL can use your key. You are responsible for all usage on your key.</small></p>
+
+                <label for="daily_request_limit">Daily reply limit (optional)</label>
+                <input type="number" name="daily_request_limit" id="daily_request_limit" min="1" value="{{ old('daily_request_limit', $settings?->daily_request_limit) }}">
+                <p><small>The most replies XGPT will generate with your key per day (resets at midnight UTC). Leave empty for no limit.</small></p>
             </div>
         </fieldset>
 

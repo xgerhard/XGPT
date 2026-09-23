@@ -137,10 +137,21 @@ around this:
   header contains would be an open SSRF relay. Don't remove that host check.
 - The per-channel rate limiter in `CommandController` is keyed by the *claimed* identity, so an
   attacker rotating the claimed `provider_id` can dodge it — it bounds damage, it isn't a real
-  identity boundary. The per-IP `throttle:chat-command-ip` route middleware and
-  `App\Support\FreeTierBudgetGuard`'s app-wide daily ceiling are the actual backstops against that.
+  identity boundary. The per-IP `throttle:chat-command-ip` route middleware and the app-wide
+  free-tier ceiling (`App\Support\DailyRequestBudget`) are the actual backstops against that.
+- The per-IP limiter keys on Cloudflare's `CF-Connecting-IP` header (falling back to
+  `$request->ip()` without it). That header is only trustworthy if the origin server accepts
+  traffic from Cloudflare alone; a caller reaching the origin directly could set it to anything
+  and dodge the limit. That throttle runs before
+  `CommandController`'s catch-all, so `bootstrap/app.php` renders its exception as a plain chat
+  sentence for `/api/command`.
 - BYO-key channels are token-gated (`?token=`, checked against `users.token`); free-tier channels
-  aren't, by design — the budget guard and rate limiters are what bound their worst case instead.
+  aren't, by design — the free-tier ceiling and rate limiters bound their worst case instead.
+  `ChatResponder::usingOwnKey()` is the single definition of "BYO-key channel" for both the AI
+  call and these checks — don't reimplement it elsewhere.
+- A BYO-key channel's optional `user_settings.daily_request_limit` is counted only after the token
+  check, so only token holders can use it up. It's deliberately not applied to free-tier channels:
+  there the identity is spoofable, so anyone could exhaust a streamer's limit on purpose.
 
 **`ai_api_key` is encrypted at rest** (`UserSettings::setAiApiKeyAttribute`/
 `getDecryptedAiApiKeyAttribute`, same `Crypt::encryptString` pattern throughout) and `$hidden` on

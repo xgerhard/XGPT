@@ -177,3 +177,19 @@ it('registers a dynamic per-channel provider when a BYO key is set for an allowl
         ->and(config("ai.providers.{$dynamicName}.key"))->toBe('sk-ant-real-key')
         ->and($responder->model())->toBe('claude-haiku-4-5');
 });
+
+it('uses the channel\'s own key when they pick OpenAI with their own key', function () {
+    $channel = User::factory()->has(UserSettings::factory()->state([
+        'ai_provider' => 'openai',
+        'ai_api_key' => 'sk-channel-own-key',
+    ]), 'settings')->create();
+
+    $responder = new ChatResponder($channel->fresh());
+
+    $dynamicName = $responder->provider();
+
+    expect($responder->usingOwnKey())->toBeTrue()
+        ->and($dynamicName)->toBe('channel-'.$channel->id)
+        ->and(config("ai.providers.{$dynamicName}.driver"))->toBe('openai')
+        ->and(config("ai.providers.{$dynamicName}.key"))->toBe('sk-channel-own-key');
+});
