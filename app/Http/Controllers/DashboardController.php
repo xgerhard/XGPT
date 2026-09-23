@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Chat\Providers\NightbotApiClient;
 use App\Chat\Providers\NightbotBotProvider;
+use App\Models\User;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class DashboardController extends Controller
 {
-    public function index(NightbotBotProvider $nightbot)
+    public function index(NightbotBotProvider $nightbot, #[CurrentUser] User $user)
     {
         $token = session('nightbot_api_token');
 
@@ -19,7 +20,7 @@ class DashboardController extends Controller
         }
 
         $commands = (new NightbotApiClient)->setAccessToken($token)->getCustomCommands();
-        $expectedUrl = $nightbot->commandSnippet(Auth::user());
+        $expectedUrl = $nightbot->commandSnippet($user);
 
         $installedCommands = array_values(array_filter(
             $commands['commands'] ?? [],
@@ -33,11 +34,12 @@ class DashboardController extends Controller
             'commands' => $installedCommands,
             'commandNeedsUpdate' => $commandNeedsUpdate,
             'commandSnippet' => $expectedUrl,
+            'settings' => $user->settings,
             'enabledProviders' => config('xgpt.enabled_providers'),
         ]);
     }
 
-    public function save(Request $request, NightbotBotProvider $nightbot)
+    public function save(Request $request, NightbotBotProvider $nightbot, #[CurrentUser] User $user)
     {
         if ($request->has('install_command')) {
             $token = session('nightbot_api_token');
@@ -46,7 +48,7 @@ class DashboardController extends Controller
                 return redirect()->route('logout');
             }
 
-            $nightbot->install(Auth::user(), $token);
+            $nightbot->install($user, $token);
 
             Session::flash('message', 'Command installed/updated!');
             Session::flash('alert-class', 'callout-block-success');
@@ -61,8 +63,6 @@ class DashboardController extends Controller
             'ai_provider' => ['nullable', 'string', 'in:'.$providers->implode(',')],
             'ai_api_key' => ['nullable', 'string', 'max:500'],
         ]);
-
-        $user = Auth::user();
 
         $user->settings()->updateOrCreate(['user_id' => $user->id], [
             'instructions' => $validated['instructions'] ?? null,

@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
+use SocialiteProviders\Manager\OAuth2\User as NightbotUser;
 
 class NightbotAuthController extends Controller
 {
@@ -17,6 +18,7 @@ class NightbotAuthController extends Controller
 
     public function handleProviderCallback(ChannelResolver $channels): RedirectResponse
     {
+        /** @var NightbotUser $nightbotUser */
         $nightbotUser = Socialite::driver('nightbot')->user();
 
         $channel = $channels->resolve(

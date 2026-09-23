@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Http;
 
 it('redirects a guest to login', function () {
     $this->get('/dashboard')->assertRedirect(route('login'));
@@ -12,6 +13,19 @@ it('redirects to logout if the Nightbot session token is missing', function () {
     $this->actingAs($channel)
         ->get('/dashboard')
         ->assertRedirect(route('logout'));
+});
+
+it('renders the dashboard with the channel\'s saved settings', function () {
+    Http::fake(['api.nightbot.tv/*' => Http::response(['commands' => []])]);
+
+    $channel = User::factory()->create();
+    $channel->settings()->create(['instructions' => 'Talk like a pirate.']);
+
+    $this->actingAs($channel)
+        ->withSession(['nightbot_api_token' => 'fake-token'])
+        ->get('/dashboard')
+        ->assertOk()
+        ->assertSee('Talk like a pirate.');
 });
 
 it('rejects a provider outside the owner\'s allowlist', function () {

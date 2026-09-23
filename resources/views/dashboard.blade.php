@@ -3,8 +3,6 @@
 @section('title', 'XGPT Dashboard')
 
 @section('content')
-    @php $settings = auth()->user()->settings; @endphp
-
     <h1>Dashboard</h1>
 
     <fieldset>
