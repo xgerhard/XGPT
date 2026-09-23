@@ -61,8 +61,7 @@ class CommandController extends Controller
             }
 
             // Per-channel throttle, keyed by the *claimed* identity. Nightbot's headers carry no
-            // cryptographic proof of origin (confirmed against nbheaders' source — see
-            // NightbotBotProvider), so an attacker can rotate the claimed provider_id to dodge
+            // cryptographic proof of origin (see NightbotBotProvider::matches()), so an attacker can rotate the claimed provider_id to dodge
             // this; it bounds damage from a single spoofed identity, it isn't the only control.
             // See the route-level per-IP throttle for the coarser backstop.
             $channelRateLimitKey = "chat-command:{$incoming->provider}:{$incoming->providerId}";

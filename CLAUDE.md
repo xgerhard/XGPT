@@ -118,21 +118,17 @@ created-or-updated, called from both `NightbotAuthController::handleProviderCall
 `CommandController` (first bot request) — a channel doesn't need to ever log in to use the free
 tier, so both paths funnel through the same lazy upsert.
 
-**`NightbotBotProvider` reads headers from Laravel's `$request` object, not from `nbheaders`'s own
-constructor.** The package's default constructor calls PHP's `getallheaders()`/`$_SERVER`
-directly, which works for a real production request but sees nothing under Laravel's test client
-(confirmed empirically — `getallheaders()` doesn't even exist under CLI, and `withHeaders()` never
-touches real superglobals). `NightbotBotProvider::headers()` instead parses
-`$request->header('Nightbot-User'|'Nightbot-Channel'|'Nightbot-Response-Url')` itself and feeds
-`NBHeaders` via `setUser()`/`setChannel()`/`setResponseUrl()`, keeping the package's
-`isNightbotRequest()`/`isUserModerator()` logic while staying testable. If you add another bot
-integration, don't repeat the raw-superglobal pattern.
+**`NightbotBotProvider` reads headers from Laravel's `$request` object, never PHP's
+`getallheaders()`/`$_SERVER`.** Those superglobals work for a real production request but see
+nothing under Laravel's test client (`getallheaders()` doesn't exist under CLI, and `withHeaders()`
+never touches real superglobals). `NightbotBotProvider::headers()` parses
+`$request->header('Nightbot-User'|'Nightbot-Channel'|'Nightbot-Response-Url')` itself. If you add
+another bot integration, follow the same pattern.
 
 ## Security notes (read before touching auth/rate-limiting/provider code)
 
-**`isNightbotRequest()` has no cryptographic verification** — read `xgerhard/nbheaders`'s source
-yourself if you doubt this: it's literally `return !! $this->channel;`, i.e. "was a
-`Nightbot-Channel` header present and parseable at all." Anyone can spoof any channel's identity by
+**Nightbot requests have no cryptographic verification** — `NightbotBotProvider::matches()` only
+checks that a `Nightbot-Channel` header is present and parseable. Anyone can spoof any channel's identity by
 hand-crafting that header on a raw request to the public endpoint. Consequences already designed
 around this:
 

@@ -7,7 +7,6 @@ use App\Chat\Contracts\SupportsAutoInstall;
 use App\Chat\IncomingMessage;
 use App\Models\User;
 use Illuminate\Http\Request;
-use xgerhard\nbheaders\NBHeaders;
 
 class NightbotBotProvider implements BotProvider, SupportsAutoInstall
 {
@@ -18,7 +17,7 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
      */
     public const COMMAND_URL = 'https://xgpt.gerhard.dev/api/command?q=$(querystring)';
 
-    private ?NBHeaders $headers = null;
+    private ?array $headers = null;
 
     public function key(): string
     {
@@ -27,26 +26,24 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
 
     public function matches(Request $request): bool
     {
-        return $this->headers($request)->isNightbotRequest();
+        return $this->headers($request)['channel'] !== null;
     }
 
     public function parse(Request $request): IncomingMessage
     {
-        $headers = $this->headers($request);
-        $user = $headers->getUser();
-        $channel = $headers->getChannel();
+        ['user' => $user, 'channel' => $channel, 'responseUrl' => $responseUrl] = $this->headers($request);
 
         return new IncomingMessage(
             botProvider: $this->key(),
-            provider: $channel->provider,
-            providerId: $channel->providerId,
-            channelDisplayName: $channel->displayName,
-            username: $user->displayName ?? null,
-            userProvider: $user->provider ?? null,
-            userProviderId: $user->providerId ?? null,
-            userLevel: $user->userLevel ?? null,
+            provider: $channel['provider'],
+            providerId: $channel['providerId'],
+            channelDisplayName: $channel['displayName'],
+            username: $user['displayName'] ?? null,
+            userProvider: $user['provider'] ?? null,
+            userProviderId: $user['providerId'] ?? null,
+            userLevel: $user['userLevel'] ?? null,
             message: (string) $request->query('q', ''),
-            responseUrl: $this->safeResponseUrl($headers->getResponseUrl()),
+            responseUrl: $this->safeResponseUrl($responseUrl),
         );
     }
 
@@ -84,60 +81,49 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
     }
 
     /**
-     * Builds NBHeaders from Laravel's own $request object rather than letting the package read
-     * PHP's raw superglobals itself (its default constructor calls getallheaders()/$_SERVER
-     * directly) — that path works for a real production request, but silently sees nothing in
-     * tests (Laravel's HTTP test client never touches real superglobals) and ignores the $request
-     * this method is handed. Feeding it explicitly through setUser()/setChannel()/setResponseUrl()
-     * keeps the package's isNightbotRequest()/isUserModerator() logic while making this testable.
+     * The parsed Nightbot-User / Nightbot-Channel / Nightbot-Response-Url headers, read from
+     * Laravel's $request (never PHP's superglobals, which the HTTP test client doesn't populate).
+     *
+     * @return array{user: ?array, channel: ?array, responseUrl: ?string}
      */
-    private function headers(Request $request): NBHeaders
+    private function headers(Request $request): array
     {
         if ($this->headers !== null) {
             return $this->headers;
         }
 
-        $headers = new NBHeaders;
-
         // Lets /api/command be exercised from a browser during local development — only ever
         // active when APP_DEBUG is on, and only when the request doesn't already carry real
         // Nightbot headers.
         if (config('app.debug') && ! $request->headers->has('Nightbot-Channel')) {
-            $headers->setUser([
-                'name' => 'xgerhard',
-                'displayName' => 'xgerhard',
-                'provider' => 'twitch',
-                'providerId' => '49056910',
-                'userLevel' => 'owner',
-            ]);
-            $headers->setChannel([
-                'name' => 'xgerhard',
-                'displayName' => 'xgerhard',
-                'provider' => 'twitch',
-                'providerId' => '49056910',
-            ]);
-
-            return $this->headers = $headers;
+            return $this->headers = [
+                'user' => [
+                    'name' => 'xgerhard',
+                    'displayName' => 'xgerhard',
+                    'provider' => 'twitch',
+                    'providerId' => '49056910',
+                    'userLevel' => 'owner',
+                ],
+                'channel' => [
+                    'name' => 'xgerhard',
+                    'displayName' => 'xgerhard',
+                    'provider' => 'twitch',
+                    'providerId' => '49056910',
+                ],
+                'responseUrl' => null,
+            ];
         }
 
-        if ($user = $this->parseHeaderValue($request, 'Nightbot-User')) {
-            $headers->setUser($user);
-        }
-
-        if ($channel = $this->parseHeaderValue($request, 'Nightbot-Channel')) {
-            $headers->setChannel($channel);
-        }
-
-        if ($responseUrl = $request->header('Nightbot-Response-Url')) {
-            $headers->setResponseUrl($responseUrl);
-        }
-
-        return $this->headers = $headers;
+        return $this->headers = [
+            'user' => $this->parseHeaderValue($request, 'Nightbot-User'),
+            'channel' => $this->parseHeaderValue($request, 'Nightbot-Channel'),
+            'responseUrl' => $request->header('Nightbot-Response-Url') ?: null,
+        ];
     }
 
     /**
      * Nightbot-User / Nightbot-Channel are query-string-encoded (e.g. "name=x&displayName=x&
-     * provider=twitch&providerId=1"), matching nbheaders' own parsing.
+     * provider=twitch&providerId=1").
      */
     private function parseHeaderValue(Request $request, string $header): ?array
     {
@@ -153,9 +139,9 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
     }
 
     /**
-     * `isNightbotRequest()` has no cryptographic verification (nbheaders' source: it's just
-     * `!! $channel`, i.e. "was a Nightbot-Channel header present at all"), so
-     * Nightbot-Response-Url is attacker-controlled on a spoofed request. Only Nightbot's own API
+     * Nightbot's headers carry no cryptographic verification — matches() only checks that a
+     * Nightbot-Channel header is present — so Nightbot-Response-Url is attacker-controlled on a
+     * spoofed request. Only Nightbot's own API
      * host is ever forwarded to, to avoid an open SSRF relay.
      */
     private function safeResponseUrl(?string $url): ?string
