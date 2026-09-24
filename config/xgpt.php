@@ -75,6 +75,12 @@ return [
         'daily_request_limit' => (int) env('XGPT_FREE_TIER_DAILY_LIMIT', 2000),
     ],
 
+    'own_key' => [
+        // Daily reply limit per own-key channel when it hasn't set one in the dashboard, so every
+        // own-key channel is capped. Resets at midnight UTC.
+        'daily_request_limit' => (int) env('XGPT_OWN_KEY_DAILY_LIMIT', 1000),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Rolling conversation window

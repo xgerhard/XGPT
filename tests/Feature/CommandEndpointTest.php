@@ -308,3 +308,19 @@ it('treats a query that is only the length instruction as empty', function () {
 
     expect(CommandController::NO_QUERY_REPLIES)->toContain($response->getContent());
 });
+
+it('caps an own-key channel at the configured default when it has not set a limit', function () {
+    config(['xgpt.own_key.daily_request_limit' => 1]);
+    ChatResponder::fake(['first reply', 'should not be reached']);
+
+    $channel = User::factory()->create(['provider' => 'twitch', 'provider_id' => '1200', 'token' => 'TOKEN1200']);
+    $channel->settings()->create(['ai_provider' => 'openai', 'ai_api_key' => 'sk-real-key']);
+
+    $this->withHeaders(nightbotHeaders(providerId: '1200'))
+        ->get('/api/command?q=hi&token=TOKEN1200')
+        ->assertSee('first reply', false);
+
+    $this->withHeaders(nightbotHeaders(providerId: '1200'))
+        ->get('/api/command?q=again&token=TOKEN1200')
+        ->assertSee('reached its daily XGPT limit', false);
+});

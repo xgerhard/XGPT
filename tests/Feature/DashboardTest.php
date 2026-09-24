@@ -25,7 +25,8 @@ it('renders the dashboard with the channel\'s saved settings', function () {
         ->withSession(['nightbot_api_token' => 'fake-token'])
         ->get('/dashboard')
         ->assertOk()
-        ->assertSee('Talk like a pirate.');
+        ->assertSee('Talk like a pirate.')
+        ->assertSee('Leave empty to use the default of 1,000.');
 });
 
 it('rejects a provider outside the owner\'s allowlist', function () {

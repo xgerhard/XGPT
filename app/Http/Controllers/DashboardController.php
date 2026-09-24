@@ -36,6 +36,7 @@ class DashboardController extends Controller
             'commandSnippet' => $expectedUrl,
             'settings' => $user->settings,
             'enabledProviders' => config('xgpt.enabled_providers'),
+            'defaultDailyLimit' => (int) config('xgpt.own_key.daily_request_limit'),
         ]);
     }
 
