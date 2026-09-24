@@ -352,3 +352,25 @@ it('cuts an oversized username', function () {
     expect(Message::where('role', 'user')->value('username'))
         ->toBe(str_repeat('x', IncomingMessage::MAX_USERNAME_LENGTH));
 });
+
+it('measures and cuts replies in characters, not bytes', function (string $char) {
+    // 300 characters fit in one Twitch message, however many bytes each takes.
+    ChatResponder::fake([str_repeat($char, 300)]);
+
+    $response = $this->withHeaders(nightbotHeaders(providerId: '1400', username: 'lin'))
+        ->get('/api/command?q=hi');
+
+    expect($response->getContent())->toBe('lin: '.str_repeat($char, 300));
+})->with(['chinese' => '你', 'devanagari' => 'न', 'emoji' => '🙂']);
+
+it('never splits a multi-byte character when a reply has to be cut', function () {
+    ChatResponder::fake([str_repeat('你', 1000)]);
+
+    $content = $this->withHeaders(nightbotHeaders(providerId: '1401', username: 'lin'))
+        ->get('/api/command?q=hi')
+        ->getContent();
+
+    expect(mb_check_encoding($content, 'UTF-8'))->toBeTrue()
+        ->and(mb_strlen($content))->toBe(399)
+        ->and($content)->toEndWith('你...');
+});

@@ -151,7 +151,8 @@ class CommandController extends Controller
 
     /**
      * Store the reply, apply mention/length formatting, and split into a second message via the
-     * bot's response URL when it doesn't fit in one.
+     * bot's response URL when it doesn't fit in one. Lengths are in characters (mb_*), never
+     * bytes: a byte cut shortens non-Latin replies and can split a character in half.
      */
     private function deliver(User $channel, $incoming, $bot, string $text): string
     {
@@ -161,21 +162,21 @@ class CommandController extends Controller
         $mention = $channel->settings?->mention_user && $incoming->username ? "{$incoming->username}: " : '';
 
         if ($mention !== '') {
-            $maxLength -= strlen($mention);
+            $maxLength -= mb_strlen($mention);
         }
 
-        if (strlen($text) <= $maxLength) {
+        if (mb_strlen($text) <= $maxLength) {
             $channel->messages()->create(['role' => 'assistant', 'content' => $text]);
 
             return $mention.$text;
         }
 
-        $firstPart = substr($text, 0, $maxLength - 3).'...';
+        $firstPart = mb_substr($text, 0, $maxLength - 3).'...';
 
         if ($incoming->responseUrl && $bot instanceof SupportsAutoInstall) {
             $secondMaxLength = $incoming->provider === 'youtube' ? 199 : 399;
-            $secondPart = substr($text, $maxLength - 3, $secondMaxLength);
-            $stored = substr($text, 0, ($maxLength - 3) + $secondMaxLength);
+            $secondPart = mb_substr($text, $maxLength - 3, $secondMaxLength);
+            $stored = mb_substr($text, 0, ($maxLength - 3) + $secondMaxLength);
 
             $channel->messages()->create(['role' => 'assistant', 'content' => $stored]);
 
@@ -183,7 +184,7 @@ class CommandController extends Controller
             // has already received the first half.
             session(['xgpt_overflow' => ['response_url' => $incoming->responseUrl, 'message' => $secondPart]]);
         } else {
-            $channel->messages()->create(['role' => 'assistant', 'content' => substr($text, 0, $maxLength - 3)]);
+            $channel->messages()->create(['role' => 'assistant', 'content' => mb_substr($text, 0, $maxLength - 3)]);
         }
 
         return $mention.$firstPart;
