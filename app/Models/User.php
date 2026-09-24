@@ -29,6 +29,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            // GitHub sponsor, set by hand in the database. Never written by the app.
             'sponsor' => 'boolean',
         ];
     }

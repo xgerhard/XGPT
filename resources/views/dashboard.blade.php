@@ -42,6 +42,19 @@
         @csrf
 
         <fieldset>
+            <legend>Support XGPT</legend>
+
+            <p>Every time someone uses the command, it costs money: each reply is a paid request to an AI provider. The free tier runs on a shared pool funded by the community through <a href="https://github.com/sponsors/xgerhard" target="_blank" rel="noopener">GitHub Sponsors</a>.</p>
+            <p>Rather pay for your own usage? Choose a provider and add your own API key below, and your channel won't be affected by the shared pool's limits.</p>
+            <p>As a thank-you, GitHub sponsors and channels using their own API key get a ❤️ next to their name whenever they use the command, in any channel.</p>
+
+            <label>
+                <input type="checkbox" name="show_sponsor_heart" value="1" @checked($settings?->show_sponsor_heart ?? true)>
+                Show the ❤️ next to my name
+            </label>
+        </fieldset>
+
+        <fieldset>
             <legend>AI provider</legend>
 
             <label for="ai_provider">Provider</label>
@@ -74,20 +87,10 @@
 
             <label>
                 <input type="checkbox" name="mention_user" value="1" @checked($settings?->mention_user ?? true)>
-                Mention the chatter's name in replies
-            </label>
-            <label>
-                <input type="checkbox" name="show_sponsor_heart" value="1" @checked($settings?->show_sponsor_heart ?? true)>
-                Show a &hearts; next to my name for other channels I chat in
+                Start every reply with an @mention of the chatter who used the command
             </label>
         </fieldset>
 
         <button type="submit" name="save_settings" value="1">Save settings</button>
     </form>
-
-    <p>
-        Every reply is part of one rolling conversation shared by your whole chat: the last
-        {{ config('xgpt.history.window_minutes') }} minutes (up to {{ config('xgpt.history.max_messages') }} messages)
-        are remembered automatically.
-    </p>
 @endsection

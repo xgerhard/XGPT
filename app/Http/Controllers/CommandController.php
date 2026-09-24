@@ -6,6 +6,7 @@ use App\Ai\Agents\ChatResponder;
 use App\Chat\BotProviderRegistry;
 use App\Chat\ChannelResolver;
 use App\Chat\Contracts\SupportsAutoInstall;
+use App\Chat\IncomingMessage;
 use App\Exceptions\InvalidTokenException;
 use App\Models\User;
 use App\Support\DailyRequestBudget;
@@ -156,12 +157,14 @@ class CommandController extends Controller
      * bot's response URL when it doesn't fit in one. Lengths are in characters (mb_*), never
      * bytes: a byte cut shortens non-Latin replies and can split a character in half.
      */
-    private function deliver(User $channel, $incoming, $bot, string $text): string
+    private function deliver(User $channel, IncomingMessage $incoming, $bot, string $text): string
     {
         $text = trim(preg_replace('/\s+/', ' ', $text));
 
         $maxLength = $incoming->provider === 'youtube' ? 199 : 399;
-        $mention = $channel->settings?->mention_user && $incoming->username ? "{$incoming->username}: " : '';
+        $mention = $channel->settings?->mention_user && $incoming->username
+            ? ($this->hasSponsorHeart($incoming) ? '[❤️] ' : '')."@{$incoming->username}: "
+            : '';
 
         if ($mention !== '') {
             $maxLength -= mb_strlen($mention);
@@ -190,6 +193,27 @@ class CommandController extends Controller
         }
 
         return $mention.$firstPart;
+    }
+
+    /**
+     * Whether the chatter's own XGPT channel earns a heart next to their name: a GitHub sponsor
+     * (users.sponsor, set by hand) or a channel using its own API key, unless they turned it off.
+     */
+    private function hasSponsorHeart(IncomingMessage $incoming): bool
+    {
+        if (! $incoming->userProvider || ! $incoming->userProviderId) {
+            return false;
+        }
+
+        $chatter = User::where('provider', $incoming->userProvider)
+            ->where('provider_id', $incoming->userProviderId)
+            ->first();
+
+        if (! $chatter || $chatter->settings?->show_sponsor_heart === false) {
+            return false;
+        }
+
+        return $chatter->sponsor || (new ChatResponder($chatter))->usingOwnKey();
     }
 
     private function hasTextContent(string $text): bool

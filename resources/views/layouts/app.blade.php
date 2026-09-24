@@ -6,7 +6,7 @@
     <title>@yield('title', 'XGPT')</title>
     <style>
         :root { color-scheme: light dark; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 780px; margin: 0 auto; padding: 1.5rem; line-height: 1.5; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 17px; max-width: 780px; margin: 0 auto; padding: 1.5rem; line-height: 1.6; }
         nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
         nav a { text-decoration: none; font-weight: 600; }
         .flash { padding: .75rem 1rem; border-radius: .5rem; margin-bottom: 1.5rem; }
@@ -16,8 +16,11 @@
         pre { padding: .75rem; overflow-x: auto; }
         .inline-field pre { flex: 1; margin: 0; }
         fieldset { border: 1px solid rgba(127,127,127,.3); border-radius: .5rem; margin-bottom: 1.5rem; padding: 1rem; }
-        label { display: block; font-weight: 600; margin-top: .75rem; }
+        legend { font-weight: 700; font-size: 1.1rem; padding: 0 .35rem; }
+        label { display: block; font-weight: 600; margin-top: 1rem; }
+        small { font-size: .9375rem; line-height: 1.55; opacity: .8; }
         input[type=text], input[type=password], textarea, select { width: 100%; box-sizing: border-box; padding: .5rem; margin-top: .25rem; }
+        input, select, textarea, button { font: inherit; }
         button { padding: .5rem 1rem; cursor: pointer; }
         .inline-field { display: flex; gap: .5rem; align-items: center; margin-top: .25rem; }
         .inline-field input[type=text] { width: 7.5rem; margin-top: 0; }

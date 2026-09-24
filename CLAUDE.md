@@ -251,6 +251,9 @@ anywhere in the installed `laravel/ai` v0.11.2 — don't go looking for it):
   `laravel/ai` Agent classes. Keep that split — `CommandController` should never reach into a
   specific bot's request-parsing details, and `ChatResponder` should never know which bot is
   calling it.
+- `users.sponsor` means "GitHub sponsor" and is set by hand in the database; the app never writes
+  it. Sponsors and own-key channels get a `[❤️]` before their @mention in any channel
+  (`CommandController::hasSponsorHeart()`), unless they turn it off in the dashboard.
 - The production URL `https://xgpt.gerhard.dev` appears in `NightbotBotProvider::COMMAND_URL`
   (the string every install/update check matches against) and in the Blade views — keep them in
   sync if it ever changes.

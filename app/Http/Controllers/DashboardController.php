@@ -93,8 +93,6 @@ class DashboardController extends Controller
             'show_sponsor_heart' => $request->boolean('show_sponsor_heart'),
         ]);
 
-        $user->update(['sponsor' => (bool) ($validated['ai_provider'] ?? null)]);
-
         Session::flash('message', 'Successfully saved your settings!');
         Session::flash('alert-class', 'callout-block-success');
 

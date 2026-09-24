@@ -64,7 +64,7 @@ it('answers a free-tier request and stores both sides of the exchange', function
     $this->withHeaders(nightbotHeaders(providerId: '111', username: 'alice'))
         ->get('/api/command?q=hi+bot')
         ->assertOk()
-        ->assertSee('alice: Hello there!', false);
+        ->assertSee('@alice: Hello there!', false);
 
     $channel = User::where('provider_id', '111')->firstOrFail();
 
@@ -138,7 +138,7 @@ it('splits an over-length reply: trims the first message and defers the rest via
     // First message: mention + as much of the reply as fits in 399 chars, ending in "...".
     $first = $response->getContent();
     expect(strlen($first))->toBe(399)
-        ->and($first)->toStartWith('Y: ')
+        ->and($first)->toStartWith('@Y: ')
         ->and($first)->toEndWith('...');
 
     // Second message: deferred, sent to Nightbot's own response URL only — never an
@@ -360,7 +360,7 @@ it('measures and cuts replies in characters, not bytes', function (string $char)
     $response = $this->withHeaders(nightbotHeaders(providerId: '1400', username: 'lin'))
         ->get('/api/command?q=hi');
 
-    expect($response->getContent())->toBe('lin: '.str_repeat($char, 300));
+    expect($response->getContent())->toBe('@lin: '.str_repeat($char, 300));
 })->with(['chinese' => '你', 'devanagari' => 'न', 'emoji' => '🙂']);
 
 it('never splits a multi-byte character when a reply has to be cut', function () {
@@ -389,4 +389,35 @@ it('applies the maximum to a saved limit above it', function () {
     $this->withHeaders(nightbotHeaders(providerId: '1500'))
         ->get('/api/command?q=again&token=TOKEN1500')
         ->assertSee('reached its daily XGPT limit', false);
+});
+
+it('shows a heart before the mention of a sponsor or own-key chatter', function (array $chatterAccount, ?array $chatterSettings, string $expected) {
+    ChatResponder::fake(['Paris.']);
+
+    // nightbotHeaders() sends the chatter as twitch user 1.
+    $chatter = User::factory()->create(['provider' => 'twitch', 'provider_id' => '1', ...$chatterAccount]);
+    if ($chatterSettings) {
+        $chatter->settings()->create($chatterSettings);
+    }
+
+    $this->withHeaders(nightbotHeaders(providerId: '1600', username: 'alice'))
+        ->get('/api/command?q=capital')
+        ->assertSee($expected, false);
+})->with([
+    'GitHub sponsor' => [['sponsor' => true], null, '[❤️] @alice: Paris.'],
+    'own API key' => [[], ['ai_provider' => 'openai', 'ai_api_key' => 'sk-key'], '[❤️] @alice: Paris.'],
+    'sponsor who turned it off' => [['sponsor' => true], ['show_sponsor_heart' => false], '@alice: Paris.'],
+    'neither' => [[], null, '@alice: Paris.'],
+]);
+
+it('shows no heart or mention when the channel turned mentions off', function () {
+    ChatResponder::fake(['Paris.']);
+    User::factory()->create(['provider' => 'twitch', 'provider_id' => '1', 'sponsor' => true]);
+
+    $channel = User::factory()->create(['provider' => 'twitch', 'provider_id' => '1601']);
+    $channel->settings()->create(['mention_user' => false]);
+
+    $response = $this->withHeaders(nightbotHeaders(providerId: '1601', username: 'alice'))->get('/api/command?q=capital');
+
+    expect($response->getContent())->toBe('Paris.');
 });

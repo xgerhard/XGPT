@@ -65,8 +65,7 @@ it('saves settings and encrypts a submitted API key', function () {
 
     expect($settings->instructions)->toBe('Be extra concise.')
         ->and($settings->ai_provider)->toBe('openai')
-        ->and($settings->decrypted_ai_api_key)->toBe('sk-my-real-key')
-        ->and($channel->fresh()->sponsor)->toBeTrue();
+        ->and($settings->decrypted_ai_api_key)->toBe('sk-my-real-key');
 });
 
 it('keeps the saved API key when the field is left blank on a later save', function () {
@@ -116,4 +115,12 @@ it('accepts a daily reply limit at the maximum', function () {
     $this->actingAs(User::factory()->create())
         ->post('/dashboard', ['save_settings' => '1', 'daily_request_limit' => '15000'])
         ->assertSessionHasNoErrors();
+});
+
+it('never changes the manually set sponsor flag when saving settings', function () {
+    $channel = User::factory()->create(['sponsor' => true]);
+
+    $this->actingAs($channel)->post('/dashboard', ['save_settings' => '1', 'ai_provider' => '']);
+
+    expect($channel->fresh()->sponsor)->toBeTrue();
 });
