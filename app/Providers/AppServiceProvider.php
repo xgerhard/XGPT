@@ -20,9 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Bot integrations, tried in this order. Adding a future bot (e.g. Fossabot, which has
-        // no account-linking API — see App\Chat\Contracts\SupportsAutoInstall) is: implement
-        // BotProvider, add an instance here. Nothing else changes.
+        // Bot integrations, tried in this order. Adding a future bot is: implement BotProvider,
+        // add an instance here. Nothing else changes.
         //
         // Deliberately NOT a singleton: NightbotBotProvider memoizes the parsed headers for one
         // request (see its $headers property) — a singleton registry would hand out the same

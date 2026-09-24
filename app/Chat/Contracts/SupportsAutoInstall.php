@@ -6,9 +6,8 @@ use App\Models\User;
 
 /**
  * Implemented by BotProviders whose bot exposes an account-linked API for installing/updating
- * the custom command on the streamer's behalf (Nightbot today). A bot with no such API (e.g.
- * Fossabot, which has no OAuth/command-management API at all) implements BotProvider only, and
- * the dashboard falls back to showing a copy-paste command snippet instead of an install button.
+ * the custom command on the streamer's behalf (Nightbot today). A bot without such an API
+ * implements BotProvider only.
  */
 interface SupportsAutoInstall
 {

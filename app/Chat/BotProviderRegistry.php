@@ -7,9 +7,8 @@ use Illuminate\Http\Request;
 use RuntimeException;
 
 /**
- * All registered chat-bot integrations, tried in order. Adding a new bot (e.g. a future
- * Fossabot integration, which implements BotProvider only — no SupportsAutoInstall, since
- * Fossabot has no account-linking API) is: implement BotProvider, add it to the array bound in
+ * All registered chat-bot integrations, tried in order. Adding a new bot is: implement
+ * BotProvider (plus SupportsAutoInstall if its API allows it), add it to the array bound in
  * App\Providers\AppServiceProvider. Nothing here or in CommandController changes.
  */
 class BotProviderRegistry

@@ -103,17 +103,17 @@ touched again, not urgent enough to justify a change on its own.
 
 `App\Chat\Contracts\BotProvider` (`matches()`/`parse()`) is implemented today only by
 `App\Chat\Providers\NightbotBotProvider`, registered in `AppServiceProvider::register()`. Adding a
-future bot (Fossabot was scoped out — see below) is: implement `BotProvider`, add an instance to
-that array. Nothing in `CommandController` or `ChatResponder` changes.
+future bot is: implement `BotProvider`, add an instance to that array. Nothing in
+`CommandController` or `ChatResponder` changes.
 
 **`SupportsAutoInstall`** is a second, optional interface for bots whose API lets us install/
-update the command on the streamer's behalf (Nightbot has this; Fossabot does not — it has no
-OAuth/command-management API at all, confirmed against docs.fossabot.com, only a
-request-validation token endpoint). A bot without it just gets a copy-paste command snippet in the
-dashboard instead of an install button.
+update the command on the streamer's behalf (Nightbot has this). Not every bot offers such an API;
+one without it would implement `BotProvider` only and need a copy-paste command snippet instead.
 
-**Login stays Nightbot-only for now** (per product decision — Fossabot can't provide an OAuth
-login anyway). `App\Chat\ChannelResolver` is the single place a channel (`User` row) gets
+**The dashboard and login are Nightbot-specific**: login is Nightbot OAuth, and
+`DashboardController` talks to Nightbot's API directly. A second bot would need its own dashboard
+design (which bot a channel uses, install vs. paste), not just a different label.
+`App\Chat\ChannelResolver` is the single place a channel (`User` row) gets
 created-or-updated, called from both `NightbotAuthController::handleProviderCallback` (login) and
 `CommandController` (first bot request) — a channel doesn't need to ever log in to use the free
 tier, so both paths funnel through the same lazy upsert.
