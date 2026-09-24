@@ -60,8 +60,8 @@
                 <p><small><strong>Set a spending limit with your AI provider.</strong> It's the only cap that's fully guaranteed. XGPT has its own safeguards, but chat commands can't be fully verified, and anyone who gets hold of your command URL can use your key. You are responsible for all usage on your key.</small></p>
 
                 <label for="daily_request_limit">Daily reply limit</label>
-                <input type="number" name="daily_request_limit" id="daily_request_limit" min="1" placeholder="{{ $defaultDailyLimit }}" value="{{ old('daily_request_limit', $settings?->daily_request_limit) }}">
-                <p><small>The most replies XGPT will generate with your key per day (resets at midnight UTC). Leave empty to use the default of {{ number_format($defaultDailyLimit) }}.</small></p>
+                <input type="number" name="daily_request_limit" id="daily_request_limit" min="1" max="{{ $maxDailyLimit }}" placeholder="{{ $defaultDailyLimit }}" value="{{ old('daily_request_limit', $settings?->daily_request_limit) }}">
+                <p><small>The most replies XGPT will generate with your key per day (resets at midnight UTC). Leave empty for the recommended {{ number_format($defaultDailyLimit) }}. The maximum is {{ number_format($maxDailyLimit) }}.</small></p>
             </div>
         </fieldset>
 

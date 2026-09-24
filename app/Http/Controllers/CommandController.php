@@ -82,8 +82,10 @@ class CommandController extends Controller
 
                 // Counted only after the token check, so only token holders can use up a
                 // channel's own limit.
-                $dailyLimit = $channel->settings->daily_request_limit
-                    ?? (int) config('xgpt.own_key.daily_request_limit');
+                $dailyLimit = min(
+                    $channel->settings->daily_request_limit ?? (int) config('xgpt.own_key.daily_request_limit'),
+                    (int) config('xgpt.own_key.max_daily_request_limit'),
+                );
 
                 if (! $budget->consume("channel:{$channel->id}", $dailyLimit)) {
                     return 'This channel has reached its daily XGPT limit. It resets at midnight UTC.';

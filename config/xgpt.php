@@ -76,9 +76,11 @@ return [
     ],
 
     'own_key' => [
-        // Daily reply limit per own-key channel when it hasn't set one in the dashboard, so every
-        // own-key channel is capped. Resets at midnight UTC.
-        'daily_request_limit' => (int) env('XGPT_OWN_KEY_DAILY_LIMIT', 1000),
+        // Daily reply limits per own-key channel, reset at midnight UTC: the recommended default
+        // when a channel hasn't set one, and the most a channel may set. About one reply every
+        // 17 / 6 seconds around the clock.
+        'daily_request_limit' => (int) env('XGPT_OWN_KEY_DAILY_LIMIT', 5000),
+        'max_daily_request_limit' => (int) env('XGPT_OWN_KEY_MAX_DAILY_LIMIT', 15000),
     ],
 
     // Output tokens per reply, reasoning included — bounds what one request can cost whoever sends

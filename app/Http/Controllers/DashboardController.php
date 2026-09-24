@@ -40,6 +40,7 @@ class DashboardController extends Controller
             'settings' => $user->settings,
             'enabledProviders' => config('xgpt.enabled_providers'),
             'defaultDailyLimit' => (int) config('xgpt.own_key.daily_request_limit'),
+            'maxDailyLimit' => (int) config('xgpt.own_key.max_daily_request_limit'),
         ]);
     }
 
@@ -78,7 +79,7 @@ class DashboardController extends Controller
             'instructions' => ['nullable', 'string', 'max:2000'],
             'ai_provider' => ['nullable', 'string', 'in:'.$providers->implode(',')],
             'ai_api_key' => ['nullable', 'string', 'max:500'],
-            'daily_request_limit' => ['nullable', 'integer', 'min:1', 'max:1000000'],
+            'daily_request_limit' => ['nullable', 'integer', 'min:1', 'max:'.(int) config('xgpt.own_key.max_daily_request_limit')],
         ]);
 
         $user->settings()->updateOrCreate(['user_id' => $user->id], [

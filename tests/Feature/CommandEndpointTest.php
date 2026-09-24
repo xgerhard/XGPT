@@ -374,3 +374,19 @@ it('never splits a multi-byte character when a reply has to be cut', function ()
         ->and(mb_strlen($content))->toBe(399)
         ->and($content)->toEndWith('你...');
 });
+
+it('applies the maximum to a saved limit above it', function () {
+    config(['xgpt.own_key.max_daily_request_limit' => 1]);
+    ChatResponder::fake(['first reply', 'should not be reached']);
+
+    $channel = User::factory()->create(['provider' => 'twitch', 'provider_id' => '1500', 'token' => 'TOKEN1500']);
+    $channel->settings()->create(['ai_provider' => 'openai', 'ai_api_key' => 'sk-real-key', 'daily_request_limit' => 100]);
+
+    $this->withHeaders(nightbotHeaders(providerId: '1500'))
+        ->get('/api/command?q=hi&token=TOKEN1500')
+        ->assertSee('first reply', false);
+
+    $this->withHeaders(nightbotHeaders(providerId: '1500'))
+        ->get('/api/command?q=again&token=TOKEN1500')
+        ->assertSee('reached its daily XGPT limit', false);
+});

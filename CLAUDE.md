@@ -150,7 +150,8 @@ around this:
   `ChatResponder::usingOwnKey()` is the single definition of "BYO-key channel" for both the AI
   call and these checks — don't reimplement it elsewhere.
 - Every BYO-key channel has a daily reply limit: its own `user_settings.daily_request_limit`, or
-  `xgpt.own_key.daily_request_limit` when unset. It's counted only after the token check, so only
+  `xgpt.own_key.daily_request_limit` when unset, never above `xgpt.own_key.max_daily_request_limit`
+  (also enforced at request time, so lowering the maximum applies to already-saved values). It's counted only after the token check, so only
   token holders can use it up. It's deliberately not applied to free-tier channels:
   there the identity is spoofable, so anyone could exhaust a streamer's limit on purpose.
 - Every request's cost is bounded regardless of sender: `IncomingMessage`'s constructor cuts the

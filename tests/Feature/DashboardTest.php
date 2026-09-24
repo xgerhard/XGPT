@@ -16,6 +16,7 @@ it('redirects to logout if the Nightbot session token is missing', function () {
 });
 
 it('renders the dashboard with the channel\'s saved settings', function () {
+    config(['xgpt.own_key.daily_request_limit' => 5000, 'xgpt.own_key.max_daily_request_limit' => 15000]);
     Http::fake(['api.nightbot.tv/*' => Http::response(['commands' => []])]);
 
     $channel = User::factory()->create();
@@ -26,7 +27,7 @@ it('renders the dashboard with the channel\'s saved settings', function () {
         ->get('/dashboard')
         ->assertOk()
         ->assertSee('Talk like a pirate.')
-        ->assertSee('Leave empty to use the default of 1,000.');
+        ->assertSee('Leave empty for the recommended 5,000. The maximum is 15,000.');
 });
 
 it('rejects a provider outside the owner\'s allowlist', function () {
@@ -100,9 +101,19 @@ it('saves an optional daily reply limit', function () {
     expect($channel->settings()->firstOrFail()->daily_request_limit)->toBeNull();
 });
 
-it('rejects a daily reply limit below 1', function () {
+it('rejects a daily reply limit outside 1 to the maximum', function (string $limit) {
+    config(['xgpt.own_key.max_daily_request_limit' => 15000]);
+
     $this->actingAs(User::factory()->create())
         ->from('/dashboard')
-        ->post('/dashboard', ['save_settings' => '1', 'daily_request_limit' => '0'])
+        ->post('/dashboard', ['save_settings' => '1', 'daily_request_limit' => $limit])
         ->assertSessionHasErrors('daily_request_limit');
+})->with(['zero' => '0', 'above the maximum' => '15001']);
+
+it('accepts a daily reply limit at the maximum', function () {
+    config(['xgpt.own_key.max_daily_request_limit' => 15000]);
+
+    $this->actingAs(User::factory()->create())
+        ->post('/dashboard', ['save_settings' => '1', 'daily_request_limit' => '15000'])
+        ->assertSessionHasNoErrors();
 });
