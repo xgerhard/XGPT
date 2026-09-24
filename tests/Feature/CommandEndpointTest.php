@@ -5,8 +5,14 @@ use App\Chat\IncomingMessage;
 use App\Http\Controllers\CommandController;
 use App\Models\Message;
 use App\Models\User;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Http\Client\Request as HttpClientRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Laravel\Ai\Exceptions\InsufficientCreditsException;
+use Laravel\Ai\Exceptions\ProviderConnectionException;
+use Laravel\Ai\Exceptions\ProviderOverloadedException;
+use Laravel\Ai\Exceptions\RateLimitedException;
 
 function nightbotHeaders(string $providerId = '999', string $username = 'chatter', string $userLevel = 'everyone'): array
 {
@@ -78,7 +84,7 @@ it('does not require a token for a free-tier channel', function () {
     $this->withHeaders(nightbotHeaders(providerId: '222'))
         ->get('/api/command?q=hi')
         ->assertOk()
-        ->assertDontSee('token is missing', false);
+        ->assertDontSee('outdated or set up wrong', false);
 });
 
 it('requires a matching token once the channel has its own AI key', function () {
@@ -90,17 +96,17 @@ it('requires a matching token once the channel has its own AI key', function () 
     $this->withHeaders(nightbotHeaders(providerId: '333'))
         ->get('/api/command?q=hi')
         ->assertOk()
-        ->assertSee('token is missing', false);
+        ->assertSee('outdated or set up wrong', false);
 
     $this->withHeaders(nightbotHeaders(providerId: '333'))
         ->get('/api/command?q=hi&token=WRONG')
         ->assertOk()
-        ->assertSee('token is missing', false);
+        ->assertSee('outdated or set up wrong', false);
 
     $this->withHeaders(nightbotHeaders(providerId: '333'))
         ->get('/api/command?q=hi&token=TOKEN123')
         ->assertOk()
-        ->assertDontSee('token is missing', false);
+        ->assertDontSee('outdated or set up wrong', false);
 });
 
 it('throttles a single claimed channel identity past the per-minute limit', function () {
@@ -119,7 +125,7 @@ it('stops serving the free tier once the daily budget is exhausted', function ()
     ChatResponder::fake(['ok']);
 
     $this->withHeaders(nightbotHeaders(providerId: '555'))->get('/api/command?q=one')->assertSee('ok', false);
-    $this->withHeaders(nightbotHeaders(providerId: '666'))->get('/api/command?q=two')->assertSee('daily usage limit', false);
+    $this->withHeaders(nightbotHeaders(providerId: '666'))->get('/api/command?q=two')->assertSee('free replies are used up for today', false);
 });
 
 it('splits an over-length reply: trims the first message and defers the rest via Nightbot-Response-Url', function () {
@@ -222,7 +228,7 @@ it('does not spend the free-tier budget for a BYO-key channel', function () {
     // Now the free tier really is exhausted, for a third, different free-tier channel.
     $this->withHeaders(nightbotHeaders(providerId: '999'))
         ->get('/api/command?q=three')
-        ->assertSee('daily usage limit', false);
+        ->assertSee('free replies are used up for today', false);
 });
 
 it('stops an own-key channel at its daily limit, counting only token-verified requests', function () {
@@ -234,7 +240,7 @@ it('stops an own-key channel at its daily limit, counting only token-verified re
     // A request with a wrong token is rejected before it can use up the limit.
     $this->withHeaders(nightbotHeaders(providerId: '1001'))
         ->get('/api/command?q=hi&token=WRONG')
-        ->assertSee('token is missing', false);
+        ->assertSee('outdated or set up wrong', false);
 
     $this->withHeaders(nightbotHeaders(providerId: '1001'))
         ->get('/api/command?q=hi&token=TOKEN1001')
@@ -242,7 +248,7 @@ it('stops an own-key channel at its daily limit, counting only token-verified re
 
     $this->withHeaders(nightbotHeaders(providerId: '1001'))
         ->get('/api/command?q=again&token=TOKEN1001')
-        ->assertSee('reached its daily XGPT limit', false);
+        ->assertSee('used up its XGPT replies for today', false);
 });
 
 it('ignores a daily limit on a free-tier channel', function () {
@@ -323,7 +329,7 @@ it('caps an own-key channel at the configured default when it has not set a limi
 
     $this->withHeaders(nightbotHeaders(providerId: '1200'))
         ->get('/api/command?q=again&token=TOKEN1200')
-        ->assertSee('reached its daily XGPT limit', false);
+        ->assertSee('used up its XGPT replies for today', false);
 });
 
 it('cuts an oversized query before it is sent or stored', function () {
@@ -388,7 +394,7 @@ it('applies the maximum to a saved limit above it', function () {
 
     $this->withHeaders(nightbotHeaders(providerId: '1500'))
         ->get('/api/command?q=again&token=TOKEN1500')
-        ->assertSee('reached its daily XGPT limit', false);
+        ->assertSee('used up its XGPT replies for today', false);
 });
 
 it('shows a heart before the mention of a sponsor or own-key chatter', function (array $chatterAccount, ?array $chatterSettings, string $expected) {
@@ -434,3 +440,33 @@ it('stores nothing when the channel turned history off', function () {
 
     expect(Message::where('channel_id', $channel->id)->count())->toBe(0);
 });
+
+it('explains provider failures in plain chat language, based on whose key it is', function (string $exception, bool $ownKey, string $expected) {
+    $throw = match ($exception) {
+        'credits' => fn () => throw InsufficientCreditsException::forProvider('openai'),
+        'rate limit' => fn () => throw RateLimitedException::forProvider('openai'),
+        'timeout' => fn () => throw ProviderConnectionException::forProvider('openai'),
+        'overloaded' => fn () => throw ProviderOverloadedException::forProvider('openai'),
+        'invalid key' => fn () => throw new RequestException(
+            new Illuminate\Http\Client\Response(new Response(401))
+        ),
+    };
+    ChatResponder::fake($throw);
+
+    $channel = User::factory()->create(['provider' => 'twitch', 'provider_id' => '1800', 'token' => 'TOKEN1800']);
+    if ($ownKey) {
+        $channel->settings()->create(['ai_provider' => 'openai', 'ai_api_key' => 'sk-key']);
+    }
+
+    $response = $this->withHeaders(nightbotHeaders(providerId: '1800'))->get('/api/command?q=hi&token=TOKEN1800');
+
+    expect($response->getContent())->toContain($expected);
+})->with([
+    'own key out of credit' => ['credits', true, "The streamer's AI account has run out of credit"],
+    'free pool out of credit' => ['credits', false, "XGPT's free pool has run out for this month"],
+    'rate limited' => ['rate limit', false, 'The AI service is busy right now'],
+    'timeout' => ['timeout', false, 'The AI took too long to answer'],
+    'overloaded' => ['overloaded', false, 'The AI service is having issues right now'],
+    'own key invalid' => ['invalid key', true, "The streamer's AI API key isn't working"],
+    'site key invalid' => ['invalid key', false, "Something went wrong on XGPT's side"],
+]);

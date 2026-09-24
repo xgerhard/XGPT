@@ -28,6 +28,8 @@ class CommandController extends Controller
      * for a lot of chatters, this is the very first thing the bot ever says to them. Picked at
      * random each time; referenced directly from CommandEndpointTest rather than duplicated there.
      */
+    private const UNEXPECTED_ERROR = 'Something went wrong on XGPT\'s side. Please try again later.';
+
     public const NO_QUERY_REPLIES = [
         'How can I help you today?',
         "Hey, what's up? Ask me something!",
@@ -52,6 +54,7 @@ class CommandController extends Controller
         DailyRequestBudget $budget,
     ) {
         $channel = null;
+        $responder = null;
 
         try {
             $bot = $registry->resolve($request);
@@ -89,10 +92,10 @@ class CommandController extends Controller
                 );
 
                 if (! $budget->consume("channel:{$channel->id}", $dailyLimit)) {
-                    return 'This channel has reached its daily XGPT limit. It resets at midnight UTC.';
+                    return 'This channel has used up its XGPT replies for today. Back tomorrow!';
                 }
             } elseif (! $budget->consume('free-tier', (int) config('xgpt.free_tier.daily_request_limit'))) {
-                return 'XGPT has reached its free daily usage limit. Add your own API key in the dashboard to keep going: https://xgpt.gerhard.dev/dashboard';
+                return 'XGPT\'s free replies are used up for today. The streamer can add their own API key to keep going: https://xgpt.gerhard.dev/dashboard';
             }
 
             // Prompted before it's stored: ChatResponder::messages() reads this table fresh at
@@ -115,31 +118,35 @@ class CommandController extends Controller
         } catch (RuntimeException) {
             return 'Only Nightbot requests allowed.';
         } catch (InvalidTokenException) {
-            return 'Error: XGPT token is missing or doesn\'t match. Please visit https://xgpt.gerhard.dev/dashboard to resolve this issue.';
-        } catch (InsufficientCreditsException|RateLimitedException) {
-            return 'Error: The AI provider for this channel has hit its usage limit. Support this project: https://github.com/sponsors/xgerhard ❤️';
+            return 'This XGPT command is outdated or set up wrong. The streamer can fix it at https://xgpt.gerhard.dev/dashboard';
+        } catch (InsufficientCreditsException) {
+            return $responder?->usingOwnKey()
+                ? 'The streamer\'s AI account has run out of credit or hit its spending limit. They can check it with their AI provider.'
+                : 'XGPT\'s free pool has run out for this month. Help keep it running: https://github.com/sponsors/xgerhard ❤️';
+        } catch (RateLimitedException) {
+            return 'The AI service is busy right now. Try again in a moment.';
         } catch (RequestException $e) {
             // laravel/ai only wraps 429/402/5xx-family provider errors into its own typed
             // exceptions (see Gateway\Concerns\HandlesFailoverErrors) — a 401/403 (invalid key)
             // bubbles up as a raw Illuminate\Http\Client\RequestException instead.
-            if (in_array($e->response?->status(), [401, 403], true)) {
-                return 'Error: Incorrect API key provided in your XGPT settings. Check the dashboard for where to find a new one.';
+            if (in_array($e->response?->status(), [401, 403], true) && $responder?->usingOwnKey()) {
+                return 'The streamer\'s AI API key isn\'t working. They can update it at https://xgpt.gerhard.dev/dashboard';
             }
 
             Log::error('XGPT provider request failed.', ['status' => $e->response?->status(), 'channel_id' => $channel?->id]);
 
-            return 'Error: Unexpected error occurred, please contact xgerhard.';
+            return self::UNEXPECTED_ERROR;
         } catch (ProviderConnectionException) {
-            return 'Error: The AI provider took too long to respond. Please try again in a bit. ResidentSleeper';
+            return 'The AI took too long to answer. Try again in a moment.';
         } catch (ProviderOverloadedException) {
-            return 'Error: The AI provider is having issues right now. Please try again shortly.';
+            return 'The AI service is having issues right now. Try again in a moment.';
         } catch (\Throwable $e) {
             // Deliberately broad: nothing this endpoint does should ever surface as an uncaught
             // exception (bots relay whatever text comes back verbatim into chat) — see
             // config/xgpt.php's neighboring CLAUDE.md section for why this is load-bearing.
             Log::error('XGPT command failed unexpectedly.', ['channel_id' => $channel?->id, 'exception' => $e->getMessage()]);
 
-            return 'Error: Unexpected error occurred, please contact xgerhard.';
+            return self::UNEXPECTED_ERROR;
         }
     }
 
