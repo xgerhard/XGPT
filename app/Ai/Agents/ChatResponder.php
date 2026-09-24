@@ -30,10 +30,11 @@ class ChatResponder implements Agent, Conversational, HasProviderOptions
      * Kept deliberately short: this is sent as input on every single request, so its wording is
      * a real, ongoing cost, not a one-time one.
      */
-    private const FRAMING = 'You are a helpful assistant for a %s chat. Multiple people may be '
-        .'chatting with you; messages are labeled [username]. Answer only the newest one, using '
-        .'earlier messages as context only if from the same user or clearly referenced. '
-        ."Don't prefix replies with a name or tag. Answer in %d characters or less.";
+    private const FRAMING = 'You are a helpful assistant in a %s chat. Viewers can ask you questions. '
+        .'Messages are labeled [username]; answer only the newest one, using earlier messages as '
+        .'context only if from the same user or clearly referenced. Answer directly; only ask a '
+        .'question back if the message is too unclear to answer. Don\'t prefix replies with a name '
+        .'or tag. Answer in %d characters or less.';
 
     public function __construct(private readonly User $channel) {}
 
@@ -50,7 +51,11 @@ class ChatResponder implements Agent, Conversational, HasProviderOptions
     public function instructions(): Stringable|string
     {
         $length = $this->channel->provider === 'youtube' ? 150 : 250;
-        $framing = sprintf(self::FRAMING, ucfirst($this->channel->provider), $length);
+        $framing = sprintf(
+            self::FRAMING,
+            $this->channel->provider === 'youtube' ? 'YouTube' : ucfirst($this->channel->provider),
+            $length,
+        );
 
         $custom = trim((string) $this->channel->settings?->instructions);
 

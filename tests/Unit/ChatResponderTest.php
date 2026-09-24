@@ -18,7 +18,9 @@ it('always includes the mandatory multi-user framing and length limit, even with
 
     $instructions = (string) (new ChatResponder($channel->fresh()))->instructions();
 
-    expect($instructions)->toContain('[username]')
+    expect($instructions)->toStartWith('You are a helpful assistant in a Twitch chat. Viewers can ask you questions. Messages')
+        ->and($instructions)->toContain('only ask a question back if the message is too unclear to answer')
+        ->and($instructions)->toContain('[username]')
         ->and($instructions)->toContain('newest')
         ->and($instructions)->toContain('250 characters')
         ->and($instructions)->not->toContain("\n\n"); // nothing appended when there's no custom text
@@ -27,7 +29,8 @@ it('always includes the mandatory multi-user framing and length limit, even with
 it('gives YouTube channels the shorter length limit in the framing', function () {
     $channel = User::factory()->create(['provider' => 'youtube']);
 
-    expect((new ChatResponder($channel->fresh()))->instructions())->toContain('150 characters');
+    expect((string) (new ChatResponder($channel->fresh()))->instructions())->toContain('150 characters')
+        ->and((string) (new ChatResponder($channel->fresh()))->instructions())->toContain('in a YouTube chat.');
 });
 
 it('appends a channel\'s custom instructions after the mandatory framing, never in place of it', function () {
