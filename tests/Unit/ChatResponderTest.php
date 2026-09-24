@@ -202,3 +202,40 @@ it('caps the output tokens the provider may generate', function () {
 
     expect(TextGenerationOptions::forAgent($responder)->maxTokens)->toBe(321);
 });
+
+it('sends no history when the channel turned it off', function () {
+    $channel = User::factory()->has(UserSettings::factory()->state(['use_history' => false]), 'settings')->create();
+    putMessageAt($channel, 'user', 'alice', 'earlier', now()->subMinute());
+
+    expect((new ChatResponder($channel->fresh()))->messages())->toBe([]);
+});
+
+it('uses an own-key channel\'s history sizes, capped at the maximum', function () {
+    config(['xgpt.history' => ['window_minutes' => 5, 'max_messages' => 10, 'own_key_max_window_minutes' => 60, 'own_key_max_messages' => 30]]);
+
+    $channel = User::factory()->has(UserSettings::factory()->state([
+        'ai_provider' => 'openai',
+        'ai_api_key' => 'sk-key',
+        'history_max_messages' => 50,
+        'history_window_minutes' => 20,
+    ]), 'settings')->create();
+
+    $responder = new ChatResponder($channel->fresh());
+
+    expect($responder->historyMaxMessages())->toBe(30)
+        ->and($responder->historyWindowMinutes())->toBe(20);
+});
+
+it('ignores custom history sizes on the free tier', function () {
+    config(['xgpt.history' => ['window_minutes' => 5, 'max_messages' => 10, 'own_key_max_window_minutes' => 60, 'own_key_max_messages' => 30]]);
+
+    $channel = User::factory()->has(UserSettings::factory()->state([
+        'history_max_messages' => 25,
+        'history_window_minutes' => 30,
+    ]), 'settings')->create();
+
+    $responder = new ChatResponder($channel->fresh());
+
+    expect($responder->historyMaxMessages())->toBe(10)
+        ->and($responder->historyWindowMinutes())->toBe(5);
+});

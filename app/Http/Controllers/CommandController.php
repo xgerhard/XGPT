@@ -103,11 +103,13 @@ class CommandController extends Controller
             // FRAMING tells the model to expect, rather than being the one unlabeled line.
             $response = $responder->prompt(ChatResponder::formatLine($incoming->username, $incoming->message));
 
-            $channel->messages()->create([
-                'role' => 'user',
-                'username' => $incoming->username,
-                'content' => $incoming->message,
-            ]);
+            if ($channel->remembersHistory()) {
+                $channel->messages()->create([
+                    'role' => 'user',
+                    'username' => $incoming->username,
+                    'content' => $incoming->message,
+                ]);
+            }
 
             return $this->deliver($channel, $incoming, $bot, (string) $response);
         } catch (RuntimeException) {
@@ -171,7 +173,7 @@ class CommandController extends Controller
         }
 
         if (mb_strlen($text) <= $maxLength) {
-            $channel->messages()->create(['role' => 'assistant', 'content' => $text]);
+            $this->rememberReply($channel, $text);
 
             return $mention.$text;
         }
@@ -183,16 +185,23 @@ class CommandController extends Controller
             $secondPart = mb_substr($text, $maxLength - 3, $secondMaxLength);
             $stored = mb_substr($text, 0, ($maxLength - 3) + $secondMaxLength);
 
-            $channel->messages()->create(['role' => 'assistant', 'content' => $stored]);
+            $this->rememberReply($channel, $stored);
 
             // Deferred, not inline: by the time DeliverOverflowMessage::terminate() runs, Nightbot
             // has already received the first half.
             session(['xgpt_overflow' => ['response_url' => $incoming->responseUrl, 'message' => $secondPart]]);
         } else {
-            $channel->messages()->create(['role' => 'assistant', 'content' => mb_substr($text, 0, $maxLength - 3)]);
+            $this->rememberReply($channel, mb_substr($text, 0, $maxLength - 3));
         }
 
         return $mention.$firstPart;
+    }
+
+    private function rememberReply(User $channel, string $content): void
+    {
+        if ($channel->remembersHistory()) {
+            $channel->messages()->create(['role' => 'assistant', 'content' => $content]);
+        }
     }
 
     /**

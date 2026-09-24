@@ -97,6 +97,11 @@ return [
     'history' => [
         'window_minutes' => (int) env('XGPT_HISTORY_WINDOW_MINUTES', 5),
         'max_messages' => (int) env('XGPT_HISTORY_MAX_MESSAGES', 10),
+        // The most an own-key channel may set for itself. Every remembered message is re-sent
+        // with each reply, so this bounds prompt size (cost and latency). The window must stay
+        // well under message_retention_days.
+        'own_key_max_window_minutes' => (int) env('XGPT_HISTORY_OWN_KEY_MAX_WINDOW_MINUTES', 60),
+        'own_key_max_messages' => (int) env('XGPT_HISTORY_OWN_KEY_MAX_MESSAGES', 30),
     ],
 
     // How long stored chat messages are kept before the xgpt:cleanup command purges them.

@@ -58,7 +58,7 @@
             <legend>AI provider</legend>
 
             <label for="ai_provider">Provider</label>
-            <select name="ai_provider" id="ai_provider" onchange="document.getElementById('ai_api_key_field').hidden = (this.value === '' || this.selectedOptions[0].dataset.freeTier === '1')">
+            <select name="ai_provider" id="ai_provider" onchange="document.querySelectorAll('.own-key-only').forEach(el => el.hidden = (this.value === '' || this.selectedOptions[0].dataset.freeTier === '1'))">
                 <option value="">Free tier (OpenAI, shared usage pool)</option>
                 @foreach ($enabledProviders as $provider)
                     <option value="{{ $provider['key'] }}" data-free-tier="0" @selected($settings?->ai_provider === $provider['key'])>
@@ -67,7 +67,7 @@
                 @endforeach
             </select>
 
-            <div id="ai_api_key_field" @if (! $settings?->ai_provider) hidden @endif>
+            <div id="ai_api_key_field" class="own-key-only" @if (! $settings?->ai_provider) hidden @endif>
                 <label for="ai_api_key">API key</label>
                 <input type="password" name="ai_api_key" id="ai_api_key" placeholder="{{ $settings?->ai_provider ? 'Leave blank to keep your saved key' : '' }}">
                 <p><small><strong>Set a spending limit with your AI provider.</strong> It's the only cap that's fully guaranteed. XGPT has its own safeguards, but chat commands can't be fully verified, and anyone who gets hold of your command URL can use your key. You are responsible for all usage on your key.</small></p>
@@ -89,6 +89,22 @@
                 <input type="checkbox" name="mention_user" value="1" @checked($settings?->mention_user ?? true)>
                 Start every reply with an @mention of the chatter who used the command
             </label>
+
+            <label>
+                <input type="checkbox" name="use_history" value="1" @checked($settings?->use_history ?? true)>
+                Remember the conversation
+            </label>
+            <p><small>Replies take the last few chat messages into account, so follow-up questions work. Turn this off to answer every message on its own: nothing is stored, and each reply is cheaper.</small></p>
+
+            <div class="own-key-only" @if (! $settings?->ai_provider) hidden @endif>
+                <label for="history_max_messages">Messages to remember</label>
+                <input type="number" name="history_max_messages" id="history_max_messages" min="1" max="{{ $history['own_key_max_messages'] }}" placeholder="{{ $history['max_messages'] }}" value="{{ old('history_max_messages', $settings?->history_max_messages) }}">
+
+                <label for="history_window_minutes">Minutes to look back</label>
+                <input type="number" name="history_window_minutes" id="history_window_minutes" min="1" max="{{ $history['own_key_max_window_minutes'] }}" placeholder="{{ $history['window_minutes'] }}" value="{{ old('history_window_minutes', $settings?->history_window_minutes) }}">
+
+                <p><small>Available with your own API key. Leave empty for the defaults ({{ $history['max_messages'] }} messages, {{ $history['window_minutes'] }} minutes); the maximum is {{ $history['own_key_max_messages'] }} messages and {{ $history['own_key_max_window_minutes'] }} minutes. More history means better follow-ups, but every reply costs more tokens.</small></p>
+            </div>
         </fieldset>
 
         <button type="submit" name="save_settings" value="1">Save settings</button>

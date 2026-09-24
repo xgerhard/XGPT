@@ -41,6 +41,7 @@ class DashboardController extends Controller
             'enabledProviders' => config('xgpt.enabled_providers'),
             'defaultDailyLimit' => (int) config('xgpt.own_key.daily_request_limit'),
             'maxDailyLimit' => (int) config('xgpt.own_key.max_daily_request_limit'),
+            'history' => config('xgpt.history'),
         ]);
     }
 
@@ -80,6 +81,8 @@ class DashboardController extends Controller
             'ai_provider' => ['nullable', 'string', 'in:'.$providers->implode(',')],
             'ai_api_key' => ['nullable', 'string', 'max:500'],
             'daily_request_limit' => ['nullable', 'integer', 'min:1', 'max:'.(int) config('xgpt.own_key.max_daily_request_limit')],
+            'history_max_messages' => ['nullable', 'integer', 'min:1', 'max:'.(int) config('xgpt.history.own_key_max_messages')],
+            'history_window_minutes' => ['nullable', 'integer', 'min:1', 'max:'.(int) config('xgpt.history.own_key_max_window_minutes')],
         ]);
 
         $user->settings()->updateOrCreate(['user_id' => $user->id], [
@@ -89,6 +92,9 @@ class DashboardController extends Controller
             // field means "keep what's saved", not "clear it".
             ...($request->filled('ai_api_key') ? ['ai_api_key' => $validated['ai_api_key']] : []),
             'daily_request_limit' => $validated['daily_request_limit'] ?? null,
+            'use_history' => $request->boolean('use_history'),
+            'history_max_messages' => $validated['history_max_messages'] ?? null,
+            'history_window_minutes' => $validated['history_window_minutes'] ?? null,
             'mention_user' => $request->boolean('mention_user'),
             'show_sponsor_heart' => $request->boolean('show_sponsor_heart'),
         ]);

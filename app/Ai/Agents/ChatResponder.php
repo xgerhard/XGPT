@@ -62,7 +62,11 @@ class ChatResponder implements Agent, Conversational, HasProviderOptions
      */
     public function messages(): iterable
     {
-        $window = now()->subMinutes((int) config('xgpt.history.window_minutes'));
+        if (! $this->channel->remembersHistory()) {
+            return [];
+        }
+
+        $window = now()->subMinutes($this->historyWindowMinutes());
 
         // Ordered by id, not created_at: this table's timestamps are whole-second precision,
         // and a user message + its assistant reply are stored a few milliseconds apart — well
@@ -72,7 +76,7 @@ class ChatResponder implements Agent, Conversational, HasProviderOptions
         return $this->channel->messages()
             ->where('created_at', '>=', $window)
             ->latest('id')
-            ->limit((int) config('xgpt.history.max_messages'))
+            ->limit($this->historyMaxMessages())
             ->get()
             ->sortBy('id')
             ->values()
@@ -146,6 +150,28 @@ class ChatResponder implements Agent, Conversational, HasProviderOptions
             'openai' => ['reasoning' => ['effort' => 'minimal']],
             default => [],
         };
+    }
+
+    /**
+     * The channel's own history window if it uses its own key, capped by the owner's maximum;
+     * free-tier channels always get the site default.
+     */
+    public function historyWindowMinutes(): int
+    {
+        return $this->ownKeyHistorySetting('history_window_minutes', 'window_minutes', 'own_key_max_window_minutes');
+    }
+
+    public function historyMaxMessages(): int
+    {
+        return $this->ownKeyHistorySetting('history_max_messages', 'max_messages', 'own_key_max_messages');
+    }
+
+    private function ownKeyHistorySetting(string $setting, string $default, string $max): int
+    {
+        $defaultValue = (int) config("xgpt.history.{$default}");
+        $chosen = $this->usingOwnKey() ? $this->channel->settings->{$setting} : null;
+
+        return $chosen ? min($chosen, (int) config("xgpt.history.{$max}")) : $defaultValue;
     }
 
     /**

@@ -124,3 +124,31 @@ it('never changes the manually set sponsor flag when saving settings', function 
 
     expect($channel->fresh()->sponsor)->toBeTrue();
 });
+
+it('saves the history settings', function () {
+    $channel = User::factory()->create();
+
+    $this->actingAs($channel)->post('/dashboard', [
+        'save_settings' => '1',
+        'history_max_messages' => '20',
+        'history_window_minutes' => '15',
+    ])->assertSessionHasNoErrors();
+
+    $settings = $channel->settings()->firstOrFail();
+
+    expect($settings->use_history)->toBeFalse()
+        ->and($settings->history_max_messages)->toBe(20)
+        ->and($settings->history_window_minutes)->toBe(15);
+});
+
+it('rejects history sizes above the maximum', function (string $field, string $value) {
+    config(['xgpt.history.own_key_max_messages' => 30, 'xgpt.history.own_key_max_window_minutes' => 60]);
+
+    $this->actingAs(User::factory()->create())
+        ->from('/dashboard')
+        ->post('/dashboard', ['save_settings' => '1', $field => $value])
+        ->assertSessionHasErrors($field);
+})->with([
+    'messages' => ['history_max_messages', '31'],
+    'minutes' => ['history_window_minutes', '61'],
+]);

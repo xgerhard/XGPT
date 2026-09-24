@@ -192,9 +192,11 @@ anywhere in the installed `laravel/ai` v0.11.2 — don't go looking for it):
   chosen a provider *and* supplied their own key for it, and that provider is still in
   `config('xgpt.enabled_providers')` (a channel's stored choice silently falls back to the free
   tier rather than erroring if the owner later shrinks the allowlist).
-- `messages()` is the entire history mechanism — there's no conversation entity any more. It
-  queries `messages` for the last `xgpt.history.max_messages` rows within
-  `xgpt.history.window_minutes`, oldest first, and formats every user-authored line (current
+- `messages()` is the entire history mechanism. It queries `messages` for the last
+  `historyMaxMessages()` rows within `historyWindowMinutes()`, oldest first — the site defaults in
+  `xgpt.history`, or an own-key channel's own values capped at `own_key_max_*`. A channel with
+  `use_history` off gets no history and stores no messages at all (`User::remembersHistory()`).
+  It formats every user-authored line (current
   prompt included, via `formatLine()`) as `"[{username}] {content}"` so the model can tell
   multiple chatters apart in one shared, per-channel rolling conversation. `role = assistant`
   rows are the bot's own prior replies, unprefixed (single identity).

@@ -39,6 +39,14 @@ class User extends Authenticatable
         return $this->hasOne(UserSettings::class);
     }
 
+    /**
+     * Whether chat messages are stored and sent back as history. When off, nothing is stored.
+     */
+    public function remembersHistory(): bool
+    {
+        return $this->settings?->use_history ?? true;
+    }
+
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class, 'channel_id');

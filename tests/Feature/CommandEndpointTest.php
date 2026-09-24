@@ -421,3 +421,16 @@ it('shows no heart or mention when the channel turned mentions off', function ()
 
     expect($response->getContent())->toBe('Paris.');
 });
+
+it('stores nothing when the channel turned history off', function () {
+    ChatResponder::fake(['a reply']);
+
+    $channel = User::factory()->create(['provider' => 'twitch', 'provider_id' => '1700']);
+    $channel->settings()->create(['use_history' => false]);
+
+    $this->withHeaders(nightbotHeaders(providerId: '1700'))
+        ->get('/api/command?q=hi')
+        ->assertSee('a reply', false);
+
+    expect(Message::where('channel_id', $channel->id)->count())->toBe(0);
+});

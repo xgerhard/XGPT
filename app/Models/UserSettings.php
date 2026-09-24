@@ -20,6 +20,9 @@ class UserSettings extends Model
         'mention_user',
         'show_sponsor_heart',
         'daily_request_limit',
+        'use_history',
+        'history_max_messages',
+        'history_window_minutes',
     ];
 
     // ai_api_key is encrypted, but it's still ciphertext of a live secret — never let it leak
@@ -32,6 +35,9 @@ class UserSettings extends Model
             'mention_user' => 'boolean',
             'show_sponsor_heart' => 'boolean',
             'daily_request_limit' => 'integer',
+            'use_history' => 'boolean',
+            'history_max_messages' => 'integer',
+            'history_window_minutes' => 'integer',
         ];
     }
 
