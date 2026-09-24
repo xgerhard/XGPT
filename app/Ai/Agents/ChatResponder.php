@@ -115,6 +115,16 @@ class ChatResponder implements Agent, Conversational, HasProviderOptions
         return $this->allowlistedProvider()['default_model'];
     }
 
+    /**
+     * Caps what the provider generates (and bills), not just what we post: replies are cut to the
+     * chat limit afterwards anyway, and a prompt asking for an essay would otherwise be paid for
+     * in full. On reasoning models this budget includes reasoning tokens.
+     */
+    public function maxTokens(): int
+    {
+        return (int) config('xgpt.max_output_tokens');
+    }
+
     public function timeout(): int
     {
         // Nightbot's own urlfetch gives up quickly — stay well under that so we always get to

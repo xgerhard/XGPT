@@ -81,6 +81,11 @@ return [
         'daily_request_limit' => (int) env('XGPT_OWN_KEY_DAILY_LIMIT', 1000),
     ],
 
+    // Output tokens per reply, reasoning included — bounds what one request can cost whoever sends
+    // it. A full 399-character reply is roughly 100-200 tokens in most languages, more in
+    // non-Latin scripts. Incoming text is capped in App\Chat\IncomingMessage.
+    'max_output_tokens' => (int) env('XGPT_MAX_OUTPUT_TOKENS', 500),
+
     /*
     |--------------------------------------------------------------------------
     | Rolling conversation window

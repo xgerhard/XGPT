@@ -5,6 +5,7 @@ use App\Models\User;
 use App\Models\UserSettings;
 use Carbon\Carbon;
 use Laravel\Ai\Enums\Lab;
+use Laravel\Ai\Gateway\TextGenerationOptions;
 
 function putMessageAt(User $channel, string $role, ?string $username, string $content, Carbon $at): void
 {
@@ -192,4 +193,12 @@ it('uses the channel\'s own key when they pick OpenAI with their own key', funct
         ->and($dynamicName)->toBe('channel-'.$channel->id)
         ->and(config("ai.providers.{$dynamicName}.driver"))->toBe('openai')
         ->and(config("ai.providers.{$dynamicName}.key"))->toBe('sk-channel-own-key');
+});
+
+it('caps the output tokens the provider may generate', function () {
+    config(['xgpt.max_output_tokens' => 321]);
+
+    $responder = new ChatResponder(User::factory()->create());
+
+    expect(TextGenerationOptions::forAgent($responder)->maxTokens)->toBe(321);
 });

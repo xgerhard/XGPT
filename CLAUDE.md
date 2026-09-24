@@ -153,6 +153,10 @@ around this:
   `xgpt.own_key.daily_request_limit` when unset. It's counted only after the token check, so only
   token holders can use it up. It's deliberately not applied to free-tier channels:
   there the identity is spoofable, so anyone could exhaust a streamer's limit on purpose.
+- Every request's cost is bounded regardless of sender: `IncomingMessage`'s constructor cuts the
+  query and username to size, so no bot integration can hand over anything larger, and
+  `ChatResponder::maxTokens()` caps what the provider may generate. Without that cap, providers
+  bill a full-length generation even though the reply is cut to the chat limit afterwards.
 
 **`ai_api_key` is encrypted at rest** (`UserSettings::setAiApiKeyAttribute`/
 `getDecryptedAiApiKeyAttribute`, same `Crypt::encryptString` pattern throughout) and `$hidden` on

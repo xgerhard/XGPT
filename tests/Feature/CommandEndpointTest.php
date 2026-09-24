@@ -1,6 +1,7 @@
 <?php
 
 use App\Ai\Agents\ChatResponder;
+use App\Chat\IncomingMessage;
 use App\Http\Controllers\CommandController;
 use App\Models\Message;
 use App\Models\User;
@@ -323,4 +324,31 @@ it('caps an own-key channel at the configured default when it has not set a limi
     $this->withHeaders(nightbotHeaders(providerId: '1200'))
         ->get('/api/command?q=again&token=TOKEN1200')
         ->assertSee('reached its daily XGPT limit', false);
+});
+
+it('cuts an oversized query before it is sent or stored', function () {
+    $capturedPrompt = null;
+    ChatResponder::fake(function (string $prompt) use (&$capturedPrompt) {
+        $capturedPrompt = $prompt;
+
+        return 'a reply';
+    });
+
+    $this->withHeaders(nightbotHeaders(providerId: '1300', username: 'eve'))
+        ->get('/api/command?q='.rawurlencode(str_repeat('é', 5000)));
+
+    $capped = str_repeat('é', IncomingMessage::MAX_MESSAGE_LENGTH);
+
+    expect($capturedPrompt)->toBe("[eve] {$capped}")
+        ->and(Message::where('role', 'user')->value('content'))->toBe($capped);
+});
+
+it('cuts an oversized username', function () {
+    ChatResponder::fake(['a reply']);
+
+    $this->withHeaders(nightbotHeaders(providerId: '1301', username: str_repeat('x', 500)))
+        ->get('/api/command?q=hi');
+
+    expect(Message::where('role', 'user')->value('username'))
+        ->toBe(str_repeat('x', IncomingMessage::MAX_USERNAME_LENGTH));
 });
