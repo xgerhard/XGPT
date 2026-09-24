@@ -8,21 +8,34 @@
     <fieldset>
         <legend>Nightbot command</legend>
 
-        @if (empty($commands))
-            <p>Not installed yet.</p>
-        @elseif ($commandNeedsUpdate)
-            <p>Installed, but out of date. Click below to refresh it.</p>
+        @if ($commandStatus === 'current')
+            <p>Your command <code>{{ implode(', ', $commandNames) }}</code> is installed and up to date.</p>
+        @elseif ($commandStatus === 'outdated')
+            <p>We found your command <code>{{ implode(', ', $commandNames) }}</code>, but it's out of date.</p>
+
+            <form method="POST" action="{{ route('dashboard.save') }}">
+                @csrf
+                <button type="submit" name="install_command" value="1">Update command</button>
+            </form>
         @else
-            <p>Installed and up to date.</p>
+            <p>No XGPT command found in your Nightbot commands yet.</p>
+
+            <form method="POST" action="{{ route('dashboard.save') }}">
+                @csrf
+                <label for="command_name">Command name</label>
+                <div class="inline-field">
+                    <input type="text" name="command_name" id="command_name" required maxlength="50" value="{{ old('command_name', $defaultCommandName) }}">
+                    <button type="submit" name="install_command" value="1">Install command</button>
+                </div>
+            </form>
+
+            <p>Or paste this manually in the "Response" field when creating a new Nightbot command:</p>
+            <div class="inline-field">
+                <pre id="command_snippet">{{ $commandSnippet }}</pre>
+                <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('command_snippet').textContent).then(() => { this.textContent = 'Copied!'; })">Copy</button>
+            </div>
+            <p><small><strong>Keep this token private.</strong> Don't share it or paste it into your chat: if you use your own AI API key below, anyone with the token can use it.</small></p>
         @endif
-
-        <form method="POST" action="{{ route('dashboard.save') }}">
-            @csrf
-            <button type="submit" name="install_command" value="1">Install / update command</button>
-        </form>
-
-        <p>Or paste this manually as a Nightbot custom command:</p>
-        <pre>{{ $commandSnippet }}</pre>
     </fieldset>
 
     <form method="POST" action="{{ route('dashboard.save') }}">

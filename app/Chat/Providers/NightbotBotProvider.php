@@ -5,6 +5,7 @@ namespace App\Chat\Providers;
 use App\Chat\Contracts\BotProvider;
 use App\Chat\Contracts\SupportsAutoInstall;
 use App\Chat\IncomingMessage;
+use App\Exceptions\CommandNameTakenException;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -16,6 +17,8 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
      * Keep this in sync with routes/api.php — the public contract must not change.
      */
     public const COMMAND_URL = 'https://xgpt.gerhard.dev/api/command?q=$(querystring)';
+
+    public const DEFAULT_COMMAND_NAME = '!ai';
 
     private const CHANNEL_FIELDS = ['name', 'displayName', 'provider', 'providerId'];
 
@@ -65,7 +68,13 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
         );
     }
 
-    public function install(User $channel, string $accessToken, string $commandName = 'ai'): void
+    /**
+     * Adds the command under $commandName, or brings every existing XGPT command up to date
+     * (the name is then ignored). Never overwrites an unrelated command that has the same name.
+     *
+     * @throws CommandNameTakenException
+     */
+    public function install(User $channel, string $accessToken, string $commandName): void
     {
         $api = (new NightbotApiClient)->setAccessToken($accessToken);
         $commands = $api->getCustomCommands();
@@ -84,6 +93,13 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
         }
 
         if (! $matched) {
+            $taken = collect($commands['commands'] ?? [])
+                ->contains(fn (array $command) => strcasecmp($command['name'], $commandName) === 0);
+
+            if ($taken) {
+                throw new CommandNameTakenException;
+            }
+
             $api->addCustomCommand([
                 'coolDown' => 5,
                 'message' => $snippet,

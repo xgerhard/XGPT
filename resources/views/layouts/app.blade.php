@@ -14,10 +14,13 @@
         .flash.callout-block-danger { background: #fee2e2; color: #991b1b; }
         code, pre { background: rgba(127,127,127,.15); border-radius: .35rem; padding: .15rem .4rem; }
         pre { padding: .75rem; overflow-x: auto; }
+        .inline-field pre { flex: 1; margin: 0; }
         fieldset { border: 1px solid rgba(127,127,127,.3); border-radius: .5rem; margin-bottom: 1.5rem; padding: 1rem; }
         label { display: block; font-weight: 600; margin-top: .75rem; }
         input[type=text], input[type=password], textarea, select { width: 100%; box-sizing: border-box; padding: .5rem; margin-top: .25rem; }
         button { padding: .5rem 1rem; cursor: pointer; }
+        .inline-field { display: flex; gap: .5rem; align-items: center; margin-top: .25rem; }
+        .inline-field input[type=text] { width: 7.5rem; margin-top: 0; }
     </style>
 </head>
 <body>
@@ -36,6 +39,9 @@
 
     @if (session('message'))
         <div class="flash {{ session('alert-class') }}">{{ session('message') }}</div>
+    @endif
+    @if ($errors->any())
+        <div class="flash callout-block-danger">{{ $errors->first() }}</div>
     @endif
 
     @yield('content')

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Chat\Providers\NightbotApiClient;
 use App\Chat\Providers\NightbotBotProvider;
+use App\Exceptions\CommandNameTakenException;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\Request;
@@ -22,18 +23,20 @@ class DashboardController extends Controller
         $commands = (new NightbotApiClient)->setAccessToken($token)->getCustomCommands();
         $snippet = $nightbot->commandSnippet($user);
 
-        $installedCommands = array_values(array_filter(
-            $commands['commands'] ?? [],
-            fn (array $command) => str_contains($command['message'], NightbotBotProvider::COMMAND_URL),
-        ));
+        $installedCommands = collect($commands['commands'] ?? [])
+            ->filter(fn (array $command) => str_contains($command['message'], NightbotBotProvider::COMMAND_URL));
 
-        $commandNeedsUpdate = ! empty($installedCommands)
-            && ! collect($installedCommands)->contains(fn ($command) => $command['message'] === $snippet);
+        $commandStatus = match (true) {
+            $installedCommands->isEmpty() => 'missing',
+            $installedCommands->every(fn (array $command) => $command['message'] === $snippet) => 'current',
+            default => 'outdated',
+        };
 
         return view('dashboard', [
-            'commands' => $installedCommands,
-            'commandNeedsUpdate' => $commandNeedsUpdate,
+            'commandStatus' => $commandStatus,
+            'commandNames' => $installedCommands->pluck('name')->all(),
             'commandSnippet' => $snippet,
+            'defaultCommandName' => NightbotBotProvider::DEFAULT_COMMAND_NAME,
             'settings' => $user->settings,
             'enabledProviders' => config('xgpt.enabled_providers'),
             'defaultDailyLimit' => (int) config('xgpt.own_key.daily_request_limit'),
@@ -49,7 +52,19 @@ class DashboardController extends Controller
                 return redirect()->route('logout');
             }
 
-            $nightbot->install($user, $token);
+            $validated = $request->validate([
+                'command_name' => ['sometimes', 'required', 'string', 'max:50', 'regex:/^\S+$/'],
+            ], [
+                'command_name.regex' => 'The command name can\'t contain spaces.',
+            ]);
+
+            try {
+                $nightbot->install($user, $token, $validated['command_name'] ?? NightbotBotProvider::DEFAULT_COMMAND_NAME);
+            } catch (CommandNameTakenException) {
+                return back()->withInput()->withErrors([
+                    'command_name' => 'You already have a different command with that name. Pick another name.',
+                ]);
+            }
 
             Session::flash('message', 'Command installed/updated!');
             Session::flash('alert-class', 'callout-block-success');

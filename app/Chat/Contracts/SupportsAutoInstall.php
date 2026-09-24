@@ -15,7 +15,7 @@ interface SupportsAutoInstall
      * Install or update the command in the channel's bot account using a previously-obtained
      * access token (never persisted — see the dashboard login flow).
      */
-    public function install(User $channel, string $accessToken): void;
+    public function install(User $channel, string $accessToken, string $commandName): void;
 
     /**
      * The command text a streamer would paste in manually, for display/troubleshooting even when
