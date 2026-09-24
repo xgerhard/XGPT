@@ -39,6 +39,7 @@ class DashboardController extends Controller
             'defaultCommandName' => NightbotBotProvider::DEFAULT_COMMAND_NAME,
             'settings' => $user->settings,
             'enabledProviders' => config('xgpt.enabled_providers'),
+            'freeTierModel' => collect(config('xgpt.enabled_providers'))->firstWhere('free_tier', true)['default_model'],
             'defaultDailyLimit' => (int) config('xgpt.own_key.daily_request_limit'),
             'maxDailyLimit' => (int) config('xgpt.own_key.max_daily_request_limit'),
             'history' => config('xgpt.history'),

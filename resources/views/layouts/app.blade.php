@@ -19,6 +19,7 @@
         legend { font-weight: 700; font-size: 1.1rem; padding: 0 .35rem; }
         label { display: block; font-weight: 600; margin-top: 1rem; }
         small { font-size: .9375rem; line-height: 1.55; opacity: .8; }
+        .notice { border-left: 4px solid #f59e0b; background: rgba(245,158,11,.12); border-radius: .35rem; padding: .75rem 1rem; margin: 1rem 0; }
         input[type=text], input[type=password], textarea, select { width: 100%; box-sizing: border-box; padding: .5rem; margin-top: .25rem; }
         input, select, textarea, button { font: inherit; }
         button { padding: .5rem 1rem; cursor: pointer; }

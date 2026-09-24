@@ -27,7 +27,8 @@ it('renders the dashboard with the channel\'s saved settings', function () {
         ->get('/dashboard')
         ->assertOk()
         ->assertSee('Talk like a pirate.')
-        ->assertSee('Leave empty for the recommended 5,000. The maximum is 15,000.');
+        ->assertSee('with the default OpenAI model ('.config('xgpt.enabled_providers.0.default_model').')')
+        ->assertSee('Leave empty for the recommended 5,000; the most you can set is 15,000.');
 });
 
 it('rejects a provider outside the owner\'s allowlist', function () {
@@ -153,3 +154,18 @@ it('rejects history sizes that are odd or above the maximum', function (string $
     'odd messages' => ['history_max_messages', '7'],
     'minutes' => ['history_window_minutes', '61'],
 ]);
+
+it('links the API key hint to the chosen provider\'s key page', function () {
+    Http::fake(['api.nightbot.tv/*' => Http::response(['commands' => []])]);
+    config(['xgpt.enabled_providers' => [
+        ['key' => 'openai', 'label' => 'OpenAI', 'default_model' => 'gpt-5-nano', 'free_tier' => true, 'key_help_url' => 'https://platform.openai.com/account/api-keys'],
+    ]]);
+
+    $channel = User::factory()->create();
+    $channel->settings()->create(['ai_provider' => 'openai', 'ai_api_key' => 'sk-key']);
+
+    $this->actingAs($channel)
+        ->withSession(['nightbot_api_token' => 'fake-token'])
+        ->get('/dashboard')
+        ->assertSee('id="ai_api_key_help" href="https://platform.openai.com/account/api-keys"', false);
+});
