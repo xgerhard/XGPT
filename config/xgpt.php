@@ -96,6 +96,7 @@ return [
 
     'history' => [
         'window_minutes' => (int) env('XGPT_HISTORY_WINDOW_MINUTES', 5),
+        // Keep message counts even: a question and its reply are stored as 2 messages.
         'max_messages' => (int) env('XGPT_HISTORY_MAX_MESSAGES', 10),
         // The most an own-key channel may set for itself. Every remembered message is re-sent
         // with each reply, so this bounds prompt size (cost and latency). The window must stay

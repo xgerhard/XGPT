@@ -141,7 +141,7 @@ it('saves the history settings', function () {
         ->and($settings->history_window_minutes)->toBe(15);
 });
 
-it('rejects history sizes above the maximum', function (string $field, string $value) {
+it('rejects history sizes that are odd or above the maximum', function (string $field, string $value) {
     config(['xgpt.history.own_key_max_messages' => 30, 'xgpt.history.own_key_max_window_minutes' => 60]);
 
     $this->actingAs(User::factory()->create())
@@ -149,6 +149,7 @@ it('rejects history sizes above the maximum', function (string $field, string $v
         ->post('/dashboard', ['save_settings' => '1', $field => $value])
         ->assertSessionHasErrors($field);
 })->with([
-    'messages' => ['history_max_messages', '31'],
+    'messages above the maximum' => ['history_max_messages', '32'],
+    'odd messages' => ['history_max_messages', '7'],
     'minutes' => ['history_window_minutes', '61'],
 ]);

@@ -94,16 +94,19 @@
                 <input type="checkbox" name="use_history" value="1" @checked($settings?->use_history ?? true)>
                 Remember the conversation
             </label>
-            <p><small>Replies take the last few chat messages into account, so follow-up questions work. Turn this off to answer every message on its own: nothing is stored, and each reply is cheaper.</small></p>
+            <p><small>When enabled, follow-up questions work. When disabled, every message is answered on its own: nothing is stored, and each reply is cheaper.</small></p>
 
             <div class="own-key-only" @if (! $settings?->ai_provider) hidden @endif>
+                <p><strong>Extra conversation settings with your own API key</strong><br>
+                <small>Leave empty for the defaults ({{ $history['max_messages'] }} messages, {{ $history['window_minutes'] }} minutes). The maximum is {{ $history['own_key_max_messages'] }} messages and {{ $history['own_key_max_window_minutes'] }} minutes. More history means better follow-ups, but every reply costs more tokens.</small></p>
+
                 <label for="history_max_messages">Messages to remember</label>
-                <input type="number" name="history_max_messages" id="history_max_messages" min="1" max="{{ $history['own_key_max_messages'] }}" placeholder="{{ $history['max_messages'] }}" value="{{ old('history_max_messages', $settings?->history_max_messages) }}">
+                <input type="number" name="history_max_messages" id="history_max_messages" min="2" step="2" max="{{ $history['own_key_max_messages'] }}" placeholder="{{ $history['max_messages'] }}" value="{{ old('history_max_messages', $settings?->history_max_messages) }}">
+                <p><small>The most recent messages the bot remembers, at most this many, even if more were sent within the time below. A question and the bot's reply count as 2, so this is always an even number.</small></p>
 
                 <label for="history_window_minutes">Minutes to look back</label>
                 <input type="number" name="history_window_minutes" id="history_window_minutes" min="1" max="{{ $history['own_key_max_window_minutes'] }}" placeholder="{{ $history['window_minutes'] }}" value="{{ old('history_window_minutes', $settings?->history_window_minutes) }}">
-
-                <p><small>Available with your own API key. Leave empty for the defaults ({{ $history['max_messages'] }} messages, {{ $history['window_minutes'] }} minutes); the maximum is {{ $history['own_key_max_messages'] }} messages and {{ $history['own_key_max_window_minutes'] }} minutes. More history means better follow-ups, but every reply costs more tokens.</small></p>
+                <p><small>Only messages sent within this many minutes are remembered.</small></p>
             </div>
         </fieldset>
 

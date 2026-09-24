@@ -81,8 +81,10 @@ class DashboardController extends Controller
             'ai_provider' => ['nullable', 'string', 'in:'.$providers->implode(',')],
             'ai_api_key' => ['nullable', 'string', 'max:500'],
             'daily_request_limit' => ['nullable', 'integer', 'min:1', 'max:'.(int) config('xgpt.own_key.max_daily_request_limit')],
-            'history_max_messages' => ['nullable', 'integer', 'min:1', 'max:'.(int) config('xgpt.history.own_key_max_messages')],
+            'history_max_messages' => ['nullable', 'integer', 'min:2', 'multiple_of:2', 'max:'.(int) config('xgpt.history.own_key_max_messages')],
             'history_window_minutes' => ['nullable', 'integer', 'min:1', 'max:'.(int) config('xgpt.history.own_key_max_window_minutes')],
+        ], [
+            'history_max_messages.multiple_of' => 'Messages to remember must be an even number: a question and its reply count as 2.',
         ]);
 
         $user->settings()->updateOrCreate(['user_id' => $user->id], [
