@@ -70,15 +70,15 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
         $api = (new NightbotApiClient)->setAccessToken($accessToken);
         $commands = $api->getCustomCommands();
 
-        $ourUrl = self::COMMAND_URL.'&token='.$channel->token;
+        $snippet = $this->commandSnippet($channel);
         $matched = false;
 
         foreach ($commands['commands'] ?? [] as $command) {
             if (str_contains($command['message'], self::COMMAND_URL)) {
                 $matched = true;
 
-                if ($command['message'] !== $ourUrl) {
-                    $api->editCustomCommand($command['_id'], ['message' => $ourUrl]);
+                if ($command['message'] !== $snippet) {
+                    $api->editCustomCommand($command['_id'], ['message' => $snippet]);
                 }
             }
         }
@@ -86,16 +86,20 @@ class NightbotBotProvider implements BotProvider, SupportsAutoInstall
         if (! $matched) {
             $api->addCustomCommand([
                 'coolDown' => 5,
-                'message' => $ourUrl,
+                'message' => $snippet,
                 'name' => $commandName,
                 'userLevel' => 'everyone',
             ]);
         }
     }
 
+    /**
+     * The full command message: Nightbot only fetches the URL and posts the response when it's
+     * wrapped in $(urlfetch ...); a bare URL would be posted into chat as-is.
+     */
     public function commandSnippet(User $channel): string
     {
-        return self::COMMAND_URL.'&token='.$channel->token;
+        return '$(urlfetch '.self::COMMAND_URL.'&token='.$channel->token.')';
     }
 
     /**

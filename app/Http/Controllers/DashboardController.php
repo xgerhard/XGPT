@@ -20,7 +20,7 @@ class DashboardController extends Controller
         }
 
         $commands = (new NightbotApiClient)->setAccessToken($token)->getCustomCommands();
-        $expectedUrl = $nightbot->commandSnippet($user);
+        $snippet = $nightbot->commandSnippet($user);
 
         $installedCommands = array_values(array_filter(
             $commands['commands'] ?? [],
@@ -28,12 +28,12 @@ class DashboardController extends Controller
         ));
 
         $commandNeedsUpdate = ! empty($installedCommands)
-            && ! collect($installedCommands)->contains(fn ($command) => $command['message'] === $expectedUrl);
+            && ! collect($installedCommands)->contains(fn ($command) => $command['message'] === $snippet);
 
         return view('dashboard', [
             'commands' => $installedCommands,
             'commandNeedsUpdate' => $commandNeedsUpdate,
-            'commandSnippet' => $expectedUrl,
+            'commandSnippet' => $snippet,
             'settings' => $user->settings,
             'enabledProviders' => config('xgpt.enabled_providers'),
             'defaultDailyLimit' => (int) config('xgpt.own_key.daily_request_limit'),
