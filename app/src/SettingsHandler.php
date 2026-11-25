@@ -10,7 +10,7 @@ class SettingsHandler
 {
     private $startInstructions =  'You are a helpful assistant for a <provider> chat.';
     private $endInstructions = 'Keep the reply to one or two short sentences, at most <length> characters.';
-    private $showConversationId = 1;
+    private $showConversationId = 0;
     private $mentionUser = 1;
     private $showSponsorHeart = 1;
 

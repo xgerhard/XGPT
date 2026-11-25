@@ -184,9 +184,9 @@
                         </section><!--//section-->
                         <section class="docs-section" id="item-3-3">
                             <h2 class="section-heading">Conversation ID</h2>
-                            <p>At the end of each message is a hashtag with a code, for example #abc. This code can be used to continue a conversation, for example to use earlier info in your next question. View examples: <a href="https://xgpt.gerhard.dev/#item-1-2" target="blank">here</a>.<br/>
+                            <p>When enabled, each message ends with a hashtag and a code, for example #abc. This code can be used to continue a conversation, for example to use earlier info in your next question. View examples: <a href="https://xgpt.gerhard.dev/#item-1-2" target="blank">here</a>.<br/>
                                 While this feature is convenient, most of the time it's not used. Most users just ask one thing at the time and don't have a full conversations with the bot.<br/>
-                                By disabling this setting, the hashtags will be removed from the message, freeing up space for a few extra characters of other info.  
+                                It's disabled by default, which leaves space for a few extra characters of other info.
                             </p>
                             <div class="form-group">
                                 <input type="checkbox" @if( auth()->user()->settings and auth()->user()->settings->show_conversation_id) checked="checked" @endif name="show_conversation_id" id="show_conversation_id"/> Show conversation ID/hashtag at the end of the message

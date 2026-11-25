@@ -107,7 +107,7 @@
                     
                     <section class="docs-section" id="item-1-2">
                         <h2 class="section-heading">Conversations</h2>
-                        <p>By default each message sent to the bot is seen as a new conversiation, however if you want to continue the previous conversation use the code at the end of the bot's message at the <u>start</u> of your new message.</p>
+                        <p>By default each message sent to the bot is seen as a new conversiation, however if the streamer enabled conversation IDs in the dashboard, you can continue the previous conversation by using the code at the end of the bot's message at the <u>start</u> of your new message.</p>
                         <div class="simplelightbox-gallery-convo row mb-3">
                             <div class="col-12 col-md-4 mb-3">
                                 <a href="assets/images/convo104d6994f86f4e1cab4370d045f74f052.png"><img class="figure-img img-fluid shadow rounded" src="assets/images/convo104d6994f86f4e1cab4370d045f74f052.png" alt="Rickrolling"/></a>

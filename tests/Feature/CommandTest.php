@@ -41,6 +41,7 @@ class CommandTest extends TestCase
 
     public function test_replies_and_continues_a_conversation(): void
     {
+        $this->channel();
         $this->fakeReply('hello there');
 
         $reply = $this->get('/api/command?q=hi')->assertOk()->getContent();
@@ -50,6 +51,13 @@ class CommandTest extends TestCase
         $this->get('/api/command?q='.urlencode("#$id again"))->assertSee("#$id", false);
         $this->assertSame(1, Conversation::count());
         $this->assertSame(4, Conversation::first()->messages()->count());
+    }
+
+    public function test_hides_the_conversation_id_by_default(): void
+    {
+        $this->fakeReply('hello there');
+
+        $this->assertSame('xgerhard: hello there', $this->get('/api/command?q=hi')->getContent());
     }
 
     public function test_missing_query(): void
