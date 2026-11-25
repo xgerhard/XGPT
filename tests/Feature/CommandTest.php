@@ -6,6 +6,8 @@ use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\User as SocialiteUser;
 use Tests\TestCase;
 
 // Relies on APP_DEBUG=true, which makes CommandController fake the Nightbot headers.
@@ -27,7 +29,7 @@ class CommandTest extends TestCase
     {
         $user = User::create([
             'name' => 'xgerhard', 'display_name' => 'xgerhard',
-            'provider' => 'twitch', 'provider_id' => '49056910', 'token' => 'abcd1234',
+            'provider' => 'twitch', 'provider_id' => '49056910',
         ]);
         $user->settings()->create([
             'start_instructions' => 'start', 'end_instructions' => 'end',
@@ -101,6 +103,19 @@ class CommandTest extends TestCase
         $this->get('/')->assertOk();
         $this->get('/dashboard')->assertRedirect('/login');
         $this->assertStringStartsWith('https://api.nightbot.tv/oauth2/authorize', $this->get('/login')->headers->get('Location'));
+    }
+
+    public function test_first_login_creates_the_channel(): void
+    {
+        $nightbotUser = (new SocialiteUser)->setToken('t')->setRaw([
+            'name' => 'new', 'displayName' => 'New', 'provider' => 'twitch', 'providerId' => '1',
+        ]);
+        Socialite::shouldReceive('driver->user')->andReturn($nightbotUser);
+
+        $this->get('/login/nightbot/callback')->assertRedirect('/dashboard');
+
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', ['provider_id' => '1', 'token' => null]);
     }
 
     public function test_dashboard_shows_an_installed_command(): void
