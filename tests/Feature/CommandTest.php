@@ -62,6 +62,26 @@ class CommandTest extends TestCase
         $this->assertSame('xgerhard: hello there', $this->get('/api/command?q=hi')->getContent());
     }
 
+    public function test_sends_the_rest_of_a_long_reply_to_the_response_url(): void
+    {
+        $answer = str_repeat('नमस्ते ', 90).'end';
+        $url = 'https://api.nightbot.tv/1/channel/send/test';
+        $this->fakeReply($answer);
+        Http::fake(['api.nightbot.tv/*' => Http::response([])]);
+        $_SERVER['HTTP_NIGHTBOT_CHANNEL'] = 'name=a&displayName=a&provider=twitch&providerId=1';
+        $_SERVER['HTTP_NIGHTBOT_RESPONSE_URL'] = $url;
+
+        try {
+            $first = $this->get('/api/command?q=hi')->getContent();
+        } finally {
+            unset($_SERVER['HTTP_NIGHTBOT_CHANNEL'], $_SERVER['HTTP_NIGHTBOT_RESPONSE_URL']);
+        }
+
+        $this->assertSame(399, mb_strlen($first));
+        Http::assertSent(fn ($r) => $r->url() === $url && str_ends_with($r['message'], 'end'));
+        $this->assertDatabaseHas('conversation_messages', ['role' => 'assistant', 'content' => $answer]);
+    }
+
     public function test_plus_continues_the_last_conversation_of_the_viewer(): void
     {
         $this->fakeReply('hello');

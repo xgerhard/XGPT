@@ -151,60 +151,26 @@ class XGPT
             }
 
             $message = trim(preg_replace('/\s+/', ' ', $message));
-            $conversionIdLength = $this->settings->show_conversation_id ? 4 : 0;
+            $responseUrl = $this->nbheaders->getResponseUrl();
+            $chatMessage = new ChatMessage(
+                $message,
+                $this->nbheaders->getProvider() == 'youtube' ? 199 : 399,
+                $this->settings->mention_user && $username ? $username : null,
+                $this->settings->show_conversation_id ? $this->conversation->id : null,
+                (bool) $responseUrl
+            );
 
-            $messageLength = $this->nbheaders->getProvider() == 'youtube' ? 199 : 399;
-            if ($username && $this->settings->mention_user) {
-                $messageLength -= strlen($username) + 2;
+            $this->storeMessage($chatMessage->shownAnswer(), 'assistant');
+
+            if ($chatMessage->second()) {
+                session(['conversion_id' => $this->conversation->id]);
+                session([$this->conversation->id => [
+                    'responseUrl' => $responseUrl,
+                    'message' => $chatMessage->second()
+                ]]);
             }
 
-            // If the response message is too long, we can send a second message.
-            if (strlen($message) > $messageLength) {
-                // These calculations made my head spin..
-                // $secondMessageStartPosition (end of first message)= First message max characters, minus conversionId length, minus 3 (...).
-                $secondMessageStartPosition = $messageLength - $conversionIdLength - 3;
-
-                if ($this->nbheaders->getResponseUrl()) {
-                    $secondMessageLength = $this->nbheaders->getProvider() == 'youtube' ? 199 : 399;;
-
-                    // $secondMessageEndPosition = $secondMessageStartPosition + Second message max characters, minus conversionId length.
-                    $secondMessageEndPosition = $secondMessageStartPosition + $secondMessageLength - $conversionIdLength;
-
-                    // If even the second message if too long, we cut it short and add ... at the end.
-                    if (strlen($message) > ($secondMessageStartPosition + $secondMessageLength)) {
-                        $secondMessage = substr($message, $secondMessageStartPosition, $secondMessageEndPosition - 3) .'...';
-                        $storeMessage = substr($message, 0, $secondMessageEndPosition - 3);
-                    } else {
-                        $secondMessage =  substr($message, $secondMessageStartPosition, $secondMessageEndPosition);
-                        $storeMessage = substr($message, 0, $secondMessageEndPosition);
-                    }
-
-                    $this->storeMessage($storeMessage, 'assistant');
-                    if ($this->settings->show_conversation_id) {
-                        $secondMessage .= ' #'. $this->conversation->id;
-                    }
-
-                    session(['conversion_id' => $this->conversation->id]);
-                    session([$this->conversation->id => [
-                        'responseUrl' => $this->nbheaders->getResponseUrl(),
-                        'message' => $secondMessage
-                    ]]);
-                }
-                $message = substr($message, 0, $secondMessageStartPosition) .'...';
-            } else {
-                $message = substr($message, 0, $messageLength - $conversionIdLength);
-                $this->storeMessage($message, 'assistant');
-            }
-
-            if ($this->settings->mention_user) {
-                $message = ($username ? $username .': ' : '') . $message;
-            }
-
-            if ($this->settings->show_conversation_id) {
-                $message = $message .' #'. $this->conversation->id;
-            }
-
-            return $message;
+            return $chatMessage->first();
         } else {
             $message = 'Error, unexpected response..';
             if (isset($response['error']['type'])) {
