@@ -162,7 +162,6 @@
                         <h2 class="section-heading">Automatic</h2>
                         <p>Sign in with Nightbot and we will handle the installation for you!</p>
                         <p>When you sign in to our dashboard you will be able to customize settings for your personal AI chatbot. Give the bot more and detailed instructions for just your stream. Provide attional information about you or your stream, so the bot can answer more specific questions. Want the bot to speak in a certain language, a certain way, include emojis, be more funny? Endless opportunities and alot of fun!</p>
-                        <p>You'll also be able to use your own OpenAI API key to avoid monthly limits, which we highly recommend!</p>
                         <p><a href="https://xgpt.gerhard.dev/dashboard" class="btn btn-secondary">Sign in with Nightbot</a></p>
                     </section><!--//section-->
                     

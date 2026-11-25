@@ -58,7 +58,6 @@
                     <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-2"><span class="theme-icon-holder me-2"><i class="fa fa-arrow-down"></i></span>Installation</a></li>
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-2-1">Commands</a></li>
                     <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-3"><span class="theme-icon-holder me-2"><i class="fa fa-gear"></i></span>Settings</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-3-0">OpenAI API key</a></li>
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-3-1">AI instructions</a></li>
                     <!--<li class="nav-item"><a class="nav-link scrollto" href="#item-3-2">Final AI instructions</a></li>-->
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-3-3">Conversation ID</a></li>
@@ -133,26 +132,6 @@
                                 <p>Looks like you have our Nightbot command installed.</p>
                             </div><!--//content-->
                         </div>
-                        @if($command_needs_token)
-                        <div class="callout-block callout-block-danger me-1">
-                            <div class="content">
-                                <h4 class="callout-title">
-                                    <span class="callout-icon-holder">
-                                        <i class="fa fa-exclamation-triangle"></i>
-                                    </span><!--//icon-holder-->
-                                    Woops!
-                                </h4>
-                                <p>Since you're using your own OpenAI API key, we need to at a personal token to the command. This is for security reasons, so only your channel will be able to use your API key.</p>
-                            </div><!--//content-->
-                        </div>
-                        <p>
-                            <form action="" method="POST">
-                                @csrf <!-- {{ csrf_field() }} -->
-                                <input type="hidden" name="action" value="update_commands"/>
-                                <button type="submit" class="btn btn-secondary">Update commands</button>
-                            </form>
-                        </p>
-                        @endif
                         <div class="table-responsive my-4">
                             <table class="table table-striped">
                                 <thead>
@@ -175,7 +154,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        <p><b>Note:</b> Please be carefull with sharing this command to friends, it contains a personal token for security purposes. Have you friends sign in <a href="https://xgpt.gerhard.dev/dashboard" target="blank">to this dashboard</a> to install their XGPT command.</p>
                         @endif
                     </section><!--//section-->
                 </article><!--//docs-article-->
@@ -189,30 +167,6 @@
                                 <p>Manage your channels settings here. These settings only effect your channel, these settings have no effect if you use our command in other channels.</p>
                             </section><!--//docs-intro-->
                         </header>
-                        <section class="docs-section" id="item-3-0">
-                            <h2 class="section-heading">OpenAI API key</h2>
-                            <p>We highly suggest using your own API key. Benefits:
-                                <ul>
-                                    <li>The command will always work, no need to worry about monthly limits.</li>
-                                    <li>Reduce our costs, which helps to keep running this app for free! 😊</li>
-                                    <li>You'll receive a heart icon in front of your name when using the command as a thank you! ❤️</li>
-                                </ul>
-                            </p>
-                            <p>
-                                Sign up for your own API key here: <a href="https://platform.openai.com/" target="blank">platform.openai.com</a><br/>
-                                After creating your account and setting up your billing information, you can create an API key here: <a href="https://platform.openai.com/api-keys" target="blank">platform.openai.com/api-keys</a>.
-                            </p>
-                            <p>
-                                More information about pricing here: <a href="https://platform.openai.com/docs/pricing" target="blank">platform.openai.com/docs/pricing</a>. We use the <b>gpt-5-nano</b> model. Tokens are calculated based on the amount of text that has to be processed. A helpful rule of thumb is that one token generally corresponds to ~4 characters of text for common English text. This translates to roughly ¾ of a word (so 100 tokens ~= 75 words).<br/>
-                            </p>
-                            <p>
-                                From our experience so far, the costs are about $0.01 every time a command is used.	
-                            </p>
-                            <div class="form-group">
-                                <label for="api_key">OpenAI API key</label>
-                                <input type="password" class="form-control" id="api_key" name="api_key" value="@if( auth()->user()->settings ){{ auth()->user()->settings->api_key}}@endif"/>
-                            </div>
-                        </section><!--//section-->
                         <section class="docs-section" id="item-3-1">
                             <h2 class="section-heading">AI instructions</h2>
                             <p>These instructions will be provided to the AI at the start of every chat, so the AI knows what it is suppose to be doing. The order is: AI instructions -> the viewer message -> final AI instructions. You can provide various instructions, in your desired language. You can also provide extra information about your channel, so the AI can use this info for better answers.<br/>A few examples:

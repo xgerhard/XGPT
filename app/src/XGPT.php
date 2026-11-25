@@ -8,8 +8,6 @@ use App\src\Badges;
 use App\Models\Conversation;
 use App\Models\ConversationMessage;
 use App\src\SettingsHandler;
-use App\Exceptions\InvalidTokenException;
-use App\Exceptions\InvalidApiKeyException;
 use App\Exceptions\RateLimitException;
 use Str;
 use Log;
@@ -34,16 +32,8 @@ class XGPT
         );
         $this->settings = $channel->settings;
 
-        // If API key is set, make sure the tokens match
-        if (
-            $this->settings->api_key &&
-            (!request()->has('token') || request()->get('token') != $channel->token)
-        ) {
-            throw new InvalidTokenException();
-        }
-
         // Init OpenAI API
-        $this->openai = new OpenAI($this->settings->api_key);
+        $this->openai = new OpenAI;
 
         // AI start instructions
         $this->messages[] = [
@@ -194,18 +184,6 @@ class XGPT
                 switch ($response['error']['type']) {
                     case 'insufficient_quota':
                         throw new RateLimitException();
-                    break;
-
-                    case 'invalid_request_error':
-                        if ($response['error']['code'] == 'invalid_api_key') {
-                            // Log for a bit, to help channels with the setup
-                            Log::error(print_r([
-                                'name' => 'Invalid API key',
-                                'provider' => $this->nbheaders->getProvider(),
-                                'channel' => $this->nbheaders->getChannel()->name
-                            ], true));
-                            throw new InvalidApiKeyException();
-                        }
                     break;
 
                     default:

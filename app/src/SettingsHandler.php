@@ -32,7 +32,6 @@ class SettingsHandler
     {
         $user = new User();
         $user->settings = new UserSettings([
-            'api_key' => '',
             'start_instructions' => $this->getStartInstructions($provider),
             'end_instructions' => $this->getEndInstructions($provider),
             'show_conversation_id' => $this->showConversationId,

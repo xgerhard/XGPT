@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -24,14 +23,13 @@ class CommandTest extends TestCase
         ]]])]);
     }
 
-    private function channel(string $apiKey = ''): User
+    private function channel(): User
     {
         $user = User::create([
             'name' => 'xgerhard', 'display_name' => 'xgerhard',
             'provider' => 'twitch', 'provider_id' => '49056910', 'token' => 'abcd1234',
         ]);
         $user->settings()->create([
-            'api_key' => $apiKey ? Crypt::encryptString($apiKey) : '',
             'start_instructions' => 'start', 'end_instructions' => 'end',
             'show_conversation_id' => 1, 'mention_user' => 1, 'show_sponsor_heart' => 1,
         ]);
@@ -57,14 +55,38 @@ class CommandTest extends TestCase
         $this->get('/api/command')->assertOk()->assertSee('Missing query');
     }
 
-    public function test_own_key_requires_matching_token(): void
+    public function test_stored_key_and_token_are_ignored(): void
     {
-        $this->channel('sk-own');
-        $this->fakeReply('secret');
+        config(['services.openai.key' => 'sk-site']);
+        $this->channel()->settings()->update(['api_key' => 'old-encrypted-key']);
+        $this->fakeReply('hello');
 
-        $this->get('/api/command?q=hi')->assertSee('token is missing');
-        $this->get('/api/command?q=hi&token=abcd1234')->assertSee('secret');
-        Http::assertSent(fn ($r) => $r->hasHeader('Authorization', 'Bearer sk-own'));
+        $this->get('/api/command?q=hi')->assertSee('hello');
+        $this->get('/api/command?q=hi&token=abcd1234')->assertSee('hello');
+        Http::assertSentCount(2);
+        Http::assertNotSent(fn ($r) => ! $r->hasHeader('Authorization', 'Bearer sk-site'));
+    }
+
+    public function test_saving_settings_keeps_sponsor_and_stored_key(): void
+    {
+        $user = $this->channel();
+        $user->update(['sponsor' => 1]);
+        $user->settings()->update(['api_key' => 'old-encrypted-key']);
+
+        $this->actingAs($user)->post('/dashboard', ['save_settings' => 1, 'api_key' => 'x', 'mention_user' => 'on'])->assertRedirect('/dashboard');
+
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'sponsor' => 1]);
+        $this->assertDatabaseHas('user_settings', ['user_id' => $user->id, 'api_key' => 'old-encrypted-key']);
+    }
+
+    public function test_installs_the_command_without_a_token(): void
+    {
+        Http::fake(['api.nightbot.tv/*' => Http::response(['commands' => [['_id' => '1', 'name' => '!other', 'message' => 'x']]])]);
+
+        $this->actingAs($this->channel())->withSession(['nightbot_api_token' => 't'])
+            ->post('/dashboard', ['action' => 'install_command', 'command_code' => '!ai']);
+
+        Http::assertSent(fn ($r) => $r->method() === 'POST' && $r['message'] === '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring))');
     }
 
     public function test_openai_quota_error_is_chat_text(): void
@@ -81,13 +103,24 @@ class CommandTest extends TestCase
         $this->assertStringStartsWith('https://api.nightbot.tv/oauth2/authorize', $this->get('/login')->headers->get('Location'));
     }
 
+    public function test_dashboard_shows_an_installed_command(): void
+    {
+        Http::fake(['api.nightbot.tv/*' => Http::response(['commands' => [[
+            '_id' => '1', 'name' => '!mychat', 'coolDown' => 5, 'userLevel' => 'everyone',
+            'message' => '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)&token=abcd1234)',
+        ]]])]);
+
+        $this->actingAs($this->channel())->withSession(['nightbot_api_token' => 't'])
+            ->get('/dashboard')->assertOk()->assertSee('!mychat');
+    }
+
     public function test_dashboard_loads_and_saves_settings(): void
     {
         Http::fake(['api.nightbot.tv/*' => Http::response(['commands' => []])]);
         $user = $this->channel();
 
         $this->actingAs($user)->withSession(['nightbot_api_token' => 't'])->get('/dashboard')->assertOk();
-        $this->post('/dashboard', ['save_settings' => 1, 'api_key' => 'sk-new', 'start_instructions' => 's'])->assertRedirect('/dashboard');
-        $this->assertSame('sk-new', $user->fresh()->settings->api_key);
+        $this->post('/dashboard', ['save_settings' => 1, 'start_instructions' => 's'])->assertRedirect('/dashboard');
+        $this->assertSame('s', $user->fresh()->settings->start_instructions);
     }
 }

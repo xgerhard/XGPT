@@ -55,12 +55,8 @@ class CommandController extends Controller
             $XGPT->setMessage($message);
             return $XGPT->getResponse();
 
-        } catch (\App\Exceptions\InvalidTokenException $e) {
-            return 'Error: XGPT token is missing or doesn\'t match. Please visit https://xgpt.gerhard.dev/dashboard to resolve this issue.';
         } catch (\App\Exceptions\RateLimitException $e) {
             return 'Error: XGPT has reached it monthly usage limit. Support this project: https://github.com/sponsors/xgerhard ❤️';
-        } catch (\App\Exceptions\InvalidApiKeyException $e) {
-            return 'Error: Incorrect API key provided in your XGPT settings. You can find your API key at https://platform.openai.com/account/api-keys';
         } catch (\Illuminate\Http\Client\ConnectionException) {
             return 'Error: ChatGPT took to long to respond. Please try again in a bit. ResidentSleeper';
         } catch (\Exception $e) {

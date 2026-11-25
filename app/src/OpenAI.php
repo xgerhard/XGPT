@@ -6,16 +6,7 @@ use Illuminate\Support\Facades\Http;
 
 class OpenAI
 {
-    private $apiKey;
     private $baseUrl = 'https://api.openai.com/v1';
-
-    public function __construct($apiKey) {
-        if ($apiKey && trim($apiKey) != '') {
-            $this->apiKey = $apiKey;
-        } else {
-            $this->apiKey = config('services.openai.key');
-        }
-    }
 
     public function getChatCompletion($post)
     {
@@ -29,7 +20,7 @@ class OpenAI
 
     public function request($path,  $method = 'GET', $parameters = [], $post = [])
     {
-        return Http::accept('application/json')->timeout(7.5)->withToken($this->apiKey)->post(
+        return Http::accept('application/json')->timeout(7.5)->withToken(config('services.openai.key'))->post(
             $this->baseUrl . $path,
             $post
         )->json();
