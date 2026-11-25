@@ -32,7 +32,7 @@ class CommandTest extends TestCase
             'provider' => 'twitch', 'provider_id' => '49056910',
         ]);
         $user->settings()->create([
-            'start_instructions' => 'start', 'end_instructions' => 'end',
+            'start_instructions' => 'start',
             'show_conversation_id' => 1, 'mention_user' => 1, 'show_sponsor_heart' => 1,
         ]);
 
@@ -55,6 +55,16 @@ class CommandTest extends TestCase
     public function test_missing_query(): void
     {
         $this->get('/api/command')->assertOk()->assertSee('Missing query');
+    }
+
+    public function test_sends_the_channel_prompt_and_the_length_rule(): void
+    {
+        $this->channel()->settings()->update(['end_instructions' => 'custom']);
+        $this->fakeReply('hello');
+
+        $this->get('/api/command?q=hi')->assertSee('hello');
+
+        Http::assertSent(fn ($r) => array_column($r['input'], 'content') === ['start', 'hi', 'Keep the reply to one or two short sentences, at most 300 characters.']);
     }
 
     public function test_stored_key_and_token_are_ignored(): void

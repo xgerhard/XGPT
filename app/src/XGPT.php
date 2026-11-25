@@ -18,6 +18,7 @@ class XGPT
     private $conversation = null;
     private $messages = [];
     private $settings;
+    private $endInstructions;
     private $openai;
 
     public function __construct($nbheaders)
@@ -31,6 +32,7 @@ class XGPT
             $nbheaders->getChannel()->providerId
         );
         $this->settings = $channel->settings;
+        $this->endInstructions = $settings->getEndInstructions($nbheaders->getChannel()->provider);
 
         // Init OpenAI API
         $this->openai = new OpenAI;
@@ -63,7 +65,7 @@ class XGPT
     {
         return array_merge($this->messages, $this->getConversationMessages(), [[
             'role' => 'developer',
-            'content' => $this->settings->end_instructions
+            'content' => $this->endInstructions
         ]]);
     }
 

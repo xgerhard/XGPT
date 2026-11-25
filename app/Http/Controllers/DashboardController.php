@@ -78,7 +78,6 @@ class DashboardController extends Controller
                     'user_id' => $user->id
                 ], [
                     'start_instructions' => $request->post('start_instructions'),
-                    'end_instructions' => $request->post('end_instructions'),
                     'show_conversation_id' => $request->has('show_conversation_id'),
                     'mention_user' => $request->has('mention_user'),
                     'show_sponsor_heart' => $request->has('show_sponsor_heart')

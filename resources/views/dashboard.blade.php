@@ -59,7 +59,6 @@
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-2-1">Commands</a></li>
                     <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-3"><span class="theme-icon-holder me-2"><i class="fa fa-gear"></i></span>Settings</a></li>
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-3-1">AI instructions</a></li>
-                    <!--<li class="nav-item"><a class="nav-link scrollto" href="#item-3-2">Final AI instructions</a></li>-->
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-3-3">Conversation ID</a></li>
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-3-4">Mention user</a></li>
                     <li class="nav-item"><a class="nav-link scrollto" href="#item-3-5">Sponsor heart</a></li>
@@ -169,7 +168,7 @@
                         </header>
                         <section class="docs-section" id="item-3-1">
                             <h2 class="section-heading">AI instructions</h2>
-                            <p>These instructions will be provided to the AI at the start of every chat, so the AI knows what it is suppose to be doing. The order is: AI instructions -> the viewer message -> final AI instructions. You can provide various instructions, in your desired language. You can also provide extra information about your channel, so the AI can use this info for better answers.<br/>A few examples:
+                            <p>These instructions will be provided to the AI at the start of every chat, so the AI knows what it is suppose to be doing. You can provide various instructions, in your desired language. You can also provide extra information about your channel, so the AI can use this info for better answers.<br/>A few examples:
                                 <ul>
                                     <li>You are a helpful assistant for a Twitch chat.</li>
                                     <li>You are an assistant for a Twitch chat where viewers can ask you questions, be snappy, try to roast the viewer.</li>
@@ -181,19 +180,6 @@
                             <div class="form-group">
                                 <label for="start_instructions">AI instructions</label>
                                 <textarea class="form-control" id="start_instructions" name="start_instructions" style="height:100px" maxlength="500">@if( auth()->user()->settings ){{ auth()->user()->settings->start_instructions}}@endif</textarea>
-                            </div>
-                        </section><!--//section-->
-                        <section class="docs-section" id="item-3-2" style="display:none;">
-                            <h2 class="section-heading">Final AI instructions</h2>
-                            <p>This is the final instruction we send to the AI, the order is: AI instructions -> the viewer message -> final AI instructions. Currently we use this to ask to reply within a certain amount of characters (for Twitch 250, for Youtube 150). You can play around with this number, or maybe give instruction to reply in a certain language. This instruction just like the first one doesn't have to be in English, can be in your desired language. Or you could leave this settings empty.<br/>A few examples:
-                                <ul>
-                                    <li>Default instructions: Answer in 250 characters or less.</li>
-                                    <li>Answer in 250 characters or less and in dutch. <i>(This instruction could be provided in dutch)</i></li>
-                                </ul>
-                            </p>
-                            <div class="form-group">
-                                <label for="end_instructions">Final AI instructions</label>
-                                <textarea class="form-control" id="end_instructions" name="end_instructions" style="height:100px" maxlength="500">@if( auth()->user()->settings ){{ auth()->user()->settings->end_instructions}}@endif</textarea>
                             </div>
                         </section><!--//section-->
                         <section class="docs-section" id="item-3-3">
