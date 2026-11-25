@@ -74,11 +74,13 @@ class XGPT
     {
         if (!$this->conversation) {
             $this->generateConversion();
+        } else {
+            $this->conversation->touch();
         }
 
         $key = $this->getViewerKey();
         if ($key) {
-            Cache::store('conversations')->put($key, $this->conversation->id, now()->addHour());
+            Cache::store('conversations')->put($key, $this->conversation->id, now()->addHours(2));
         }
 
         $this->storeMessage($message, $role);

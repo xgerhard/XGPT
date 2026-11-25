@@ -67,9 +67,9 @@ class CommandTest extends TestCase
         $this->get('/api/command?q=one');
         $this->get('/api/command?q=two');
 
-        $this->travel(50)->minutes();
+        $this->travel(110)->minutes();
         $this->get('/api/command?q='.urlencode('+ three'));
-        $this->travel(50)->minutes();
+        $this->travel(110)->minutes();
         $this->get('/api/command?q='.urlencode('+ four'));
 
         $this->assertSame(2, Conversation::count());
@@ -97,7 +97,7 @@ class CommandTest extends TestCase
             $ask(1, 1, '+ own');
             $this->assertSame(3, Conversation::count());
 
-            $this->travel(61)->minutes();
+            $this->travel(121)->minutes();
             $ask(1, 1, '+ too late');
             $this->assertSame(4, Conversation::count());
         } finally {
@@ -116,6 +116,24 @@ class CommandTest extends TestCase
 
         $this->get('/api/command?q='.urlencode('+ hi'))->assertSee('hello');
         $this->assertSame(1, Conversation::count());
+    }
+
+    public function test_cleanup_deletes_conversations_unused_for_two_hours(): void
+    {
+        $this->channel();
+        $this->fakeReply('hello');
+        $this->get('/api/command?q=unused');
+        $unused = Conversation::firstOrFail()->id;
+        $this->get('/api/command?q=used');
+        $used = Conversation::whereKeyNot($unused)->firstOrFail()->id;
+
+        $this->travel(110)->minutes();
+        $this->get('/api/command?q='.urlencode("#$used again"));
+        $this->travel(110)->minutes();
+        $this->artisan('xgpt:cleanup');
+
+        $this->assertSame([$used], Conversation::pluck('id')->all());
+        $this->assertDatabaseMissing('conversation_messages', ['conversation_id' => $unused]);
     }
 
     public function test_plus_inside_a_word_is_part_of_the_question(): void

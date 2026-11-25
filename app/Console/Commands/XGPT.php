@@ -28,6 +28,6 @@ class XGPT extends Command
      */
     public function handle()
     {
-        Conversation::where('created_at', '<', now()->subDay())->delete();
+        Conversation::where('updated_at', '<', now()->subHours(2))->delete();
     }
 }
