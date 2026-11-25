@@ -29,10 +29,6 @@ class CommandController extends Controller
             ]);
         }
 
-        if (!$nbheaders->hasNightbotHeaders()) {
-            return 'Only Nightbot requests allowed.';
-        }
-
         if (!$request->has('q') || $request->get('q') == '') {
             return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
         }

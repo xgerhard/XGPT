@@ -41,6 +41,10 @@ return [
         'redirect' => env('APP_URL').'/login/nightbot/callback',
     ],
 
+    'cloudflare' => [
+        'secret' => env('CLOUDFLARE_SECRET'),
+    ],
+
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
     ],
