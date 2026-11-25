@@ -12,6 +12,7 @@ use xgerhard\nbheaders\NBHeaders;
 class XGPT
 {
     private UserSettings $settings;
+    private string $instructions;
     private string $lengthRule;
     private ?Conversation $conversation = null;
 
@@ -21,6 +22,7 @@ class XGPT
         $settingsHandler = new SettingsHandler;
 
         $this->settings = $settingsHandler->getUserWithSettings($channel->provider, $channel->providerId)->settings;
+        $this->instructions = $this->settings->start_instructions ?: $settingsHandler->getStartInstructions($channel->provider);
         $this->lengthRule = $settingsHandler->getLengthRule($channel->provider);
     }
 
@@ -81,7 +83,7 @@ class XGPT
     private function prompt(): array
     {
         return [
-            ['role' => 'developer', 'content' => $this->settings->start_instructions],
+            ['role' => 'developer', 'content' => $this->instructions],
             ...$this->conversation->messages()->get(['role', 'content'])->toArray(),
             ['role' => 'developer', 'content' => $this->lengthRule]
         ];

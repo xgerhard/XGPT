@@ -51,7 +51,7 @@ class SettingsHandler
         ]);
     }
 
-    private function getStartInstructions($provider)
+    public function getStartInstructions($provider)
     {
         return str_replace('<provider>', ucfirst($provider), $this->startInstructions);
     }

@@ -182,6 +182,32 @@ class CommandTest extends TestCase
         Http::assertSent(fn ($r) => array_column($r['input'], 'content') === ['start', 'hi', 'Keep the reply to one or two short sentences, at most 300 characters.']);
     }
 
+    public function test_empty_prompt_uses_the_default(): void
+    {
+        $this->channel()->settings()->update(['start_instructions' => null]);
+        $this->fakeReply('hello');
+
+        $this->get('/api/command?q=hi')->assertSee('hello');
+
+        Http::assertSent(fn ($r) => $r['input'][0]['content'] === 'You are a helpful assistant for a Twitch chat.');
+    }
+
+    public function test_saved_prompt_is_at_most_500_characters(): void
+    {
+        $user = $this->channel();
+        $save = fn ($text) => $this->actingAs($user)->post('/dashboard', ['save_settings' => 1, 'start_instructions' => $text]);
+
+        $save(str_repeat('न', 600));
+        $this->assertSame(str_repeat('न', 500), $user->settings()->first()->start_instructions);
+
+        // Browsers count a line break as one character, but send two
+        $save("a\r\n".str_repeat('x', 498));
+        $this->assertSame("a\n".str_repeat('x', 498), $user->settings()->first()->start_instructions);
+
+        $save('');
+        $this->assertSame('', $user->settings()->first()->start_instructions);
+    }
+
     public function test_stored_key_and_token_are_ignored(): void
     {
         config(['services.openai.key' => 'sk-site']);

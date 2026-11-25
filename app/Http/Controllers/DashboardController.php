@@ -77,7 +77,7 @@ class DashboardController extends Controller
                 $user->settings()->updateOrCreate([
                     'user_id' => $user->id
                 ], [
-                    'start_instructions' => $request->post('start_instructions'),
+                    'start_instructions' => $request->string('start_instructions')->replace("\r\n", "\n")->substr(0, 500)->value(),
                     'show_conversation_id' => $request->has('show_conversation_id'),
                     'mention_user' => $request->has('mention_user'),
                     'show_sponsor_heart' => $request->has('show_sponsor_heart')
