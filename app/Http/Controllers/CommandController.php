@@ -4,13 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\src\XGPT;
+use xgerhard\nbheaders\NBHeaders;
 
 class CommandController extends Controller
 {
-    public function run(Request $request)
+    public function run(Request $request, NBHeaders $nbheaders)
     {
-        $nbheaders = new \xgerhard\nbheaders\nbheaders;
-
         // If APP_DEBUG is set to true in your .env, you can set a test user & channel here, so the script works from the browser.
         // This will manually set the request headers that are normally send by Nightbot urlFetch: https://docs.nightbot.tv/commands/variables/urlfetch
         if(config('app.debug'))
@@ -30,7 +29,7 @@ class CommandController extends Controller
             ]);
         }
 
-        if (!$nbheaders->isNightbotRequest()) {
+        if (!$nbheaders->hasNightbotHeaders()) {
             return 'Only Nightbot requests allowed.';
         }
 
