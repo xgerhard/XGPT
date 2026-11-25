@@ -6,9 +6,7 @@ use App\src\OpenAI;
 use App\src\NightbotAPI;
 use App\src\Badges;
 use App\Models\Conversation;
-use App\Models\ConversationMessage;
 use App\src\SettingsHandler;
-use Illuminate\Support\Facades\Cache;
 
 class XGPT
 {
@@ -42,76 +40,54 @@ class XGPT
         ];
     }
 
-    public function setConversionId($id)
+    public function continueConversation($id)
     {
-        $conversation = Conversation::find($id);
-        if ($conversation) {
-            $this->conversation = $conversation;
-        }
+        $this->conversation = Conversation::find($id);
     }
 
     public function continueLastConversation()
     {
-        $key = $this->getViewerKey();
-        if ($key) {
-            $this->setConversionId(Cache::store('conversations')->get($key));
+        $viewer = $this->getViewer();
+        if ($viewer) {
+            $this->conversation = Conversation::lastOf($viewer);
         }
     }
 
     // Identifies the viewer within the channel, timers have no user
-    private function getViewerKey()
+    private function getViewer()
     {
         $user = $this->nbheaders->getUser();
         $channel = $this->nbheaders->getChannel();
 
-        return $user ? implode(':', ['conversation', $channel->provider, $channel->providerId, $user->provider, $user->providerId]) : null;
+        return $user ? implode(':', [$channel->provider, $channel->providerId, $user->provider, $user->providerId]) : null;
     }
 
-    public function setMessage($message, $role = 'user')
+    public function setMessage($message)
     {
         if (!$this->conversation) {
-            $this->generateConversion();
+            $this->conversation = Conversation::start();
         } else {
             $this->conversation->touch();
         }
 
-        $key = $this->getViewerKey();
-        if ($key) {
-            Cache::store('conversations')->put($key, $this->conversation->id, now()->addHours(2));
+        $viewer = $this->getViewer();
+        if ($viewer) {
+            $this->conversation->rememberFor($viewer);
         }
 
-        $this->storeMessage($message, $role);
+        $this->conversation->addMessage('user', $message);
     }
 
     public function getMessages()
     {
-        return array_merge($this->messages, $this->getConversationMessages(), [[
-            'role' => 'developer',
-            'content' => $this->endInstructions
-        ]]);
-    }
-
-    public function getConversationMessages()
-    {
-        $messages = [];
-        $conversation = Conversation::with('messages')->find($this->conversation->id);
-        foreach ($conversation->messages as $message) {
-            $messages[] = [
-                'role' => $message->role,
-                'content' => $message->content
-            ];
-        }
-
-        return $messages;
-    }
-
-    public function storeMessage($message, $role)
-    {
-        ConversationMessage::create([
-            'role' => $role,
-            'content' => $message,
-            'conversation_id' => $this->conversation->id
-        ]);
+        return array_merge(
+            $this->messages,
+            $this->conversation->messages()->get(['role', 'content'])->toArray(),
+            [[
+                'role' => 'developer',
+                'content' => $this->endInstructions
+            ]]
+        );
     }
 
     public function getResponse()
@@ -138,7 +114,7 @@ class XGPT
             (bool) $responseUrl
         );
 
-        $this->storeMessage($chatMessage->shownAnswer(), 'assistant');
+        $this->conversation->addMessage('assistant', $chatMessage->shownAnswer());
 
         if ($chatMessage->second()) {
             // Sent after the response, so it's the second message in chat
@@ -146,25 +122,5 @@ class XGPT
         }
 
         return $chatMessage->first();
-    }
-
-    public function generateConversion()
-    {
-        while (true) {
-            $string = generate_random_string(
-                3, // length
-                true, // letters
-                false // numbers
-            );
-
-            $conversation = Conversation::find($string);
-            if (!$conversation) {
-                break;
-            }
-        }
-
-        $this->conversation = Conversation::create([
-            'id' => $string
-        ]);
     }
 }
