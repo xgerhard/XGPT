@@ -47,6 +47,7 @@ class CommandTest extends TestCase
 
         $reply = $this->get('/api/command?q=hi')->assertOk()->getContent();
         $id = Conversation::firstOrFail()->id;
+        $this->assertMatchesRegularExpression('/^[a-z]{3}$/', $id);
         $this->assertSame("xgerhard: hello there #$id", $reply);
 
         $this->get('/api/command?q='.urlencode("#$id again"))->assertSee("#$id", false);

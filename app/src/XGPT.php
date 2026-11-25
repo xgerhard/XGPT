@@ -228,8 +228,7 @@ class XGPT
             $string = generate_random_string(
                 3, // length
                 true, // letters
-                true, // numbers
-                true // hide similar characters
+                false // numbers
             );
 
             $conversation = Conversation::find($string);
