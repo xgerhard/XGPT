@@ -277,6 +277,18 @@ class CommandTest extends TestCase
         Log::shouldHaveReceived('warning')->once();
     }
 
+    public function test_answer_that_reached_the_token_limit_is_used(): void
+    {
+        Http::fake(['*' => Http::response(['status' => 'incomplete', 'output' => [[
+            'type' => 'message',
+            'status' => 'incomplete',
+            'content' => [['type' => 'output_text', 'text' => 'half an answer']],
+        ]]])]);
+
+        $this->get('/api/command?q=hi')->assertSee('half an answer');
+        Http::assertSent(fn ($r) => $r['max_output_tokens'] === 500);
+    }
+
     public function test_empty_answer_is_an_error(): void
     {
         Exceptions::fake();

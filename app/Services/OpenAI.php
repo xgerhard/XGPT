@@ -21,6 +21,7 @@ class OpenAI
         $response = Http::acceptJson()->timeout(7.5)->withToken(config('services.openai.key'))->post(self::URL, [
             'model' => 'gpt-5-nano',
             'input' => $messages,
+            'max_output_tokens' => 500,
             'reasoning' => [
                 'effort' => 'minimal'
             ]
@@ -41,11 +42,11 @@ class OpenAI
         return $answer;
     }
 
+    // Includes incomplete messages, those reached the token limit but still have text
     private function text(array $output): string
     {
         $text = collect($output)
             ->where('type', 'message')
-            ->where('status', 'completed')
             ->flatMap(fn ($message) => $message['content'])
             ->where('type', 'output_text')
             ->implode('text', '');
