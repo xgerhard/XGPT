@@ -8,10 +8,7 @@ use App\src\Badges;
 use App\Models\Conversation;
 use App\Models\ConversationMessage;
 use App\src\SettingsHandler;
-use App\Exceptions\RateLimitException;
 use Illuminate\Support\Facades\Cache;
-use Str;
-use Log;
 
 class XGPT
 {
@@ -130,59 +127,25 @@ class XGPT
             }
         }
 
-        $response = $this->openai->createResponse([
-            'model' => 'gpt-5-nano',
-            'input' => $this->getMessages(),
-            'reasoning' => [
-                'effort' => 'minimal'
-            ]
-        ]);
+        $message = $this->openai->ask($this->getMessages());
 
-        if (isset($response['output'])) {
-            $message = '';
-            foreach ($response['output'] as $item) {
-                if (($item['type'] ?? '') === 'message' && ($item['status'] ?? '') === 'completed') {
-                    foreach ($item['content'] as $contentPart) {
-                        if (($contentPart['type'] ?? '') === 'output_text') {
-                            $message .= $contentPart['text'];
-                        }
-                    }
-                }
-            }
+        $responseUrl = $this->nbheaders->getResponseUrl();
+        $chatMessage = new ChatMessage(
+            $message,
+            $this->nbheaders->getProvider() == 'youtube' ? 199 : 399,
+            $this->settings->mention_user && $username ? $username : null,
+            $this->settings->show_conversation_id ? $this->conversation->id : null,
+            (bool) $responseUrl
+        );
 
-            $message = trim(preg_replace('/\s+/', ' ', $message));
-            $responseUrl = $this->nbheaders->getResponseUrl();
-            $chatMessage = new ChatMessage(
-                $message,
-                $this->nbheaders->getProvider() == 'youtube' ? 199 : 399,
-                $this->settings->mention_user && $username ? $username : null,
-                $this->settings->show_conversation_id ? $this->conversation->id : null,
-                (bool) $responseUrl
-            );
+        $this->storeMessage($chatMessage->shownAnswer(), 'assistant');
 
-            $this->storeMessage($chatMessage->shownAnswer(), 'assistant');
-
-            if ($chatMessage->second()) {
-                // Sent after the response, so it's the second message in chat
-                defer(fn () => (new NightbotAPI)->sendMessageByResponseUrl($responseUrl, $chatMessage->second()));
-            }
-
-            return $chatMessage->first();
-        } else {
-            $message = 'Error, unexpected response..';
-            if (isset($response['error']['type'])) {
-                switch ($response['error']['type']) {
-                    case 'insufficient_quota':
-                        throw new RateLimitException();
-                    break;
-
-                    default:
-                        Log::error(print_r($response, true));
-                }
-            }
-            $message = ($username ? $username .': ' : '') .'Error: '.  $message;
-            return $message;
+        if ($chatMessage->second()) {
+            // Sent after the response, so it's the second message in chat
+            defer(fn () => (new NightbotAPI)->sendMessageByResponseUrl($responseUrl, $chatMessage->second()));
         }
+
+        return $chatMessage->first();
     }
 
     public function generateConversion()

@@ -6,7 +6,9 @@ use App\Http\Middleware\EnsureBotRequest;
 use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Tests\TestCase;
@@ -229,6 +231,33 @@ class CommandTest extends TestCase
         Http::fake(['*' => Http::response(['error' => ['type' => 'insufficient_quota']], 429)]);
 
         $this->get('/api/command?q=hi')->assertOk()->assertSee('monthly usage limit');
+    }
+
+    public function test_other_openai_errors_are_chat_text_and_logged(): void
+    {
+        Exceptions::fake();
+        Http::fake(['*' => Http::response(['error' => ['type' => 'invalid_request_error', 'message' => 'nope']], 400)]);
+
+        $this->get('/api/command?q=hi')->assertOk()->assertSee('Unknown error');
+        Exceptions::assertReported(fn (\RuntimeException $e) => str_contains($e->getMessage(), 'nope'));
+    }
+
+    public function test_timeout_is_chat_text_and_logged(): void
+    {
+        Log::spy();
+        Http::fake(['*' => Http::failedConnection('timed out')]);
+
+        $this->get('/api/command?q=hi')->assertOk()->assertSee('took to long');
+        Log::shouldHaveReceived('warning')->once();
+    }
+
+    public function test_empty_answer_is_an_error(): void
+    {
+        Exceptions::fake();
+        $this->fakeReply('');
+
+        $this->get('/api/command?q=hi')->assertSee('Unknown error');
+        $this->assertDatabaseMissing('conversation_messages', ['role' => 'assistant']);
     }
 
     public function test_pages_and_auth_redirect(): void

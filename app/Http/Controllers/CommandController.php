@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use App\src\XGPT;
 use xgerhard\nbheaders\NBHeaders;
 
@@ -60,9 +61,11 @@ class CommandController extends Controller
 
         } catch (\App\Exceptions\RateLimitException $e) {
             return 'Error: XGPT has reached it monthly usage limit. Support this project: https://github.com/sponsors/xgerhard ❤️';
-        } catch (\Illuminate\Http\Client\ConnectionException) {
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::warning($e->getMessage());
             return 'Error: ChatGPT took to long to respond. Please try again in a bit. ResidentSleeper';
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            report($e);
             return 'Error: Unknown error occured, please contact xgerhard';
         }
     }
