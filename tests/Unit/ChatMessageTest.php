@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\src\ChatMessage;
+use App\Services\ChatMessage;
 use PHPUnit\Framework\TestCase;
 
 class ChatMessageTest extends TestCase

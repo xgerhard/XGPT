@@ -1,6 +1,6 @@
 <?php
 
-namespace App\src\Socialite;
+namespace App\Services\Socialite;
 
 use SocialiteProviders\Manager\SocialiteWasCalled;
 

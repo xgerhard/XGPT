@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\src\NightbotAPI;
-use App\src\SettingsHandler;
+use App\Services\NightbotAPI;
+use App\Services\SettingsHandler;
 use Log;
 use Exception;
 use Session;

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\src\XGPT;
+use App\Services\XGPT;
 use xgerhard\nbheaders\NBHeaders;
 
 class CommandController extends Controller

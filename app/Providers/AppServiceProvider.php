@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\src\Socialite\NightbotExtend;
+use App\Services\Socialite\NightbotExtend;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\src\Socialite;
+namespace App\Services\Socialite;
 
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Arr;

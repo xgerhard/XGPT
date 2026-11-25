@@ -1,6 +1,6 @@
 <?php
 
-namespace App\src;
+namespace App\Services;
 
 use App\Exceptions\RateLimitException;
 use Illuminate\Support\Facades\Http;

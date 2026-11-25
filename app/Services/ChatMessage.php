@@ -1,6 +1,6 @@
 <?php
 
-namespace App\src;
+namespace App\Services;
 
 /**
  * Turns an answer into one chat message, or two when it doesn't fit:
