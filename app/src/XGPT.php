@@ -143,12 +143,13 @@ class XGPT
 
             // If the response message is too long, we can send a second message.
             if (strlen($message) > $messageLength) {
+                // These calculations made my head spin..
+                // $secondMessageStartPosition (end of first message)= First message max characters, minus conversionId length, minus 3 (...).
+                $secondMessageStartPosition = $messageLength - $conversionIdLength - 3;
+
                 if ($this->nbheaders->getResponseUrl()) {
                     $secondMessageLength = $this->nbheaders->getProvider() == 'youtube' ? 199 : 399;;
 
-                    // These calculations made my head spin..
-                    // $secondMessageStartPosition (end of first message)= First message max characters, minus conversionId length, minus 3 (...).
-                    $secondMessageStartPosition = $messageLength - $conversionIdLength - 3;
                     // $secondMessageEndPosition = $secondMessageStartPosition + Second message max characters, minus conversionId length.
                     $secondMessageEndPosition = $secondMessageStartPosition + $secondMessageLength - $conversionIdLength;
 
