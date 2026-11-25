@@ -118,7 +118,7 @@ class DashboardController extends Controller
             'userLevel' => 'everyone'
         ];
 
-        if (isset($commands['commands']) and !empty($commands['commands'])) {
+        if (isset($commands['commands'])) {
             foreach ($commands['commands'] as $command) {
                 if ($command['name'] == $commandCode) {
                     // Update command

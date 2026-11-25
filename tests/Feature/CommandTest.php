@@ -91,6 +91,16 @@ class CommandTest extends TestCase
         Http::assertSent(fn ($r) => $r->method() === 'POST' && $r['message'] === '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring))');
     }
 
+    public function test_installs_the_first_command_of_a_channel(): void
+    {
+        Http::fake(['api.nightbot.tv/*' => Http::response(['commands' => []])]);
+
+        $this->actingAs($this->channel())->withSession(['nightbot_api_token' => 't'])
+            ->post('/dashboard', ['action' => 'install_command', 'command_code' => '!ai']);
+
+        Http::assertSent(fn ($r) => $r->method() === 'POST' && $r['name'] === '!ai');
+    }
+
     public function test_openai_quota_error_is_chat_text(): void
     {
         Http::fake(['*' => Http::response(['error' => ['type' => 'insufficient_quota']], 429)]);
