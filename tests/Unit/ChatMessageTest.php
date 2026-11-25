@@ -13,7 +13,7 @@ class ChatMessageTest extends TestCase
 
         $this->assertSame('Bob: hello #abc', $message->first());
         $this->assertNull($message->second());
-        $this->assertSame('hello', $message->shownAnswer());
+        $this->assertSame('hello', $message->storedAnswer());
         $this->assertSame('hello', (new ChatMessage('hello', 399))->first());
     }
 
@@ -31,7 +31,7 @@ class ChatMessageTest extends TestCase
 
         $this->assertSame('Bob: abcdefg... #abc', $message->first());
         $this->assertSame('hijklmnopqrst #abc', $message->second());
-        $this->assertSame('abcdefghijklmnopqrst', $message->shownAnswer());
+        $this->assertSame('abcdefghijklmnopqrst', $message->storedAnswer());
     }
 
     public function test_both_messages_stay_within_the_limit(): void
@@ -44,7 +44,7 @@ class ChatMessageTest extends TestCase
                 $this->assertSame($limit, mb_strlen($message->second()));
                 $this->assertStringEndsWith('... #abc', $message->second());
                 $this->assertTrue(mb_check_encoding($message->first().$message->second(), 'UTF-8'));
-                $this->assertSame(2 * $limit - mb_strlen('[❤️] Bob: ') - 2 * mb_strlen('... #abc'), mb_strlen($message->shownAnswer()));
+                $this->assertSame(2 * $limit - mb_strlen('[❤️] Bob: ') - 2 * mb_strlen('... #abc'), mb_strlen($message->storedAnswer()));
             }
         }
     }
@@ -55,6 +55,6 @@ class ChatMessageTest extends TestCase
 
         $this->assertSame('Bob: abcdefg... #abc', $message->first());
         $this->assertNull($message->second());
-        $this->assertSame('abcdefg', $message->shownAnswer());
+        $this->assertSame('abcdefg', $message->storedAnswer());
     }
 }

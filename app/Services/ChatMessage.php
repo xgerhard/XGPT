@@ -12,7 +12,7 @@ class ChatMessage
 
     private string $first;
     private ?string $second = null;
-    private string $shownAnswer;
+    private string $storedAnswer;
 
     /**
      * @param string $answer
@@ -31,13 +31,13 @@ class ChatMessage
 
         if (mb_strlen($answer) <= $firstRoom) {
             $this->first = $prefix . $answer . $suffix;
-            $this->shownAnswer = $answer;
+            $this->storedAnswer = $answer;
             return;
         }
 
         $start = $this->cut($answer, $firstRoom);
         $this->first = $prefix . $start . self::ELLIPSIS . $suffix;
-        $this->shownAnswer = $start;
+        $this->storedAnswer = $start;
 
         if ($canSplit) {
             $rest = mb_substr($answer, mb_strlen($start));
@@ -49,7 +49,7 @@ class ChatMessage
             }
 
             $this->second = $rest . $suffix;
-            $this->shownAnswer .= $shownRest;
+            $this->storedAnswer .= $shownRest;
         }
     }
 
@@ -64,11 +64,11 @@ class ChatMessage
     }
 
     /**
-     * The part of the answer that viewers get to see
+     * The answer as viewers see it over both messages, without name and code, to store in the conversation
      */
-    public function shownAnswer(): string
+    public function storedAnswer(): string
     {
-        return $this->shownAnswer;
+        return $this->storedAnswer;
     }
 
     /**

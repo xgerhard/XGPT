@@ -53,7 +53,7 @@ class XGPT
         $answer = (new OpenAI)->ask($this->prompt());
 
         $message = $this->chatMessage($answer);
-        $this->conversation->addMessage('assistant', $message->shownAnswer());
+        $this->conversation->addMessage('assistant', $message->storedAnswer());
         $this->sendLater($message->second());
 
         return $message->first();
