@@ -19,6 +19,8 @@ class XGPT
     private $nbheaders = null;
     private $conversation = null;
     private $messages = [];
+    private $settings;
+    private $openai;
 
     public function __construct($nbheaders)
     {

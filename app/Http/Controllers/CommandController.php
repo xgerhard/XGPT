@@ -13,7 +13,7 @@ class CommandController extends Controller
 
         // If APP_DEBUG is set to true in your .env, you can set a test user & channel here, so the script works from the browser.
         // This will manually set the request headers that are normally send by Nightbot urlFetch: https://docs.nightbot.tv/commands/variables/urlfetch
-        if(env('APP_DEBUG'))
+        if(config('app.debug'))
         {
             $nbheaders->setUser([
                 'name' => 'xgerhard',

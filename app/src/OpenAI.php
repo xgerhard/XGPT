@@ -13,7 +13,7 @@ class OpenAI
         if ($apiKey && trim($apiKey) != '') {
             $this->apiKey = $apiKey;
         } else {
-            $this->apiKey = env('OPENAI_API_KEY');
+            $this->apiKey = config('services.openai.key');
         }
     }
 
