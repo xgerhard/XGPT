@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\EnsureBotRequest;
 use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -58,6 +59,71 @@ class CommandTest extends TestCase
         $this->fakeReply('hello there');
 
         $this->assertSame('xgerhard: hello there', $this->get('/api/command?q=hi')->getContent());
+    }
+
+    public function test_plus_continues_the_last_conversation_of_the_viewer(): void
+    {
+        $this->fakeReply('hello');
+        $this->get('/api/command?q=one');
+        $this->get('/api/command?q=two');
+
+        $this->travel(50)->minutes();
+        $this->get('/api/command?q='.urlencode('+ three'));
+        $this->travel(50)->minutes();
+        $this->get('/api/command?q='.urlencode('+ four'));
+
+        $this->assertSame(2, Conversation::count());
+        Http::assertSent(fn ($r) => array_column(array_slice($r['input'], 1, -1), 'content') === ['two', 'hello', 'three', 'hello', 'four']);
+    }
+
+    public function test_plus_only_continues_an_own_recent_conversation(): void
+    {
+        $this->fakeReply('hello');
+        config(['app.debug' => false]);
+        $this->withoutMiddleware(EnsureBotRequest::class);
+        $ask = function ($channel, $user, $q) {
+            $id = fn ($id) => "name=a&displayName=a&provider=twitch&providerId=$id";
+            $_SERVER['HTTP_NIGHTBOT_CHANNEL'] = $id($channel);
+            $_SERVER['HTTP_NIGHTBOT_USER'] = $id($user).'&userLevel=everyone';
+            $this->get('/api/command?q='.urlencode($q))->assertSee('hello');
+        };
+
+        try {
+            $ask(1, 1, 'hi');
+            $ask(1, 2, '+ other viewer');
+            $ask(2, 1, '+ other channel');
+            $this->assertSame(3, Conversation::count());
+
+            $ask(1, 1, '+ own');
+            $this->assertSame(3, Conversation::count());
+
+            $this->travel(61)->minutes();
+            $ask(1, 1, '+ too late');
+            $this->assertSame(4, Conversation::count());
+        } finally {
+            unset($_SERVER['HTTP_NIGHTBOT_CHANNEL'], $_SERVER['HTTP_NIGHTBOT_USER']);
+        }
+
+        config(['app.debug' => true]);
+        $this->get('/api/command?q='.urlencode('+'))->assertSee('Missing query');
+    }
+
+    public function test_plus_starts_a_new_conversation_when_the_last_one_is_deleted(): void
+    {
+        $this->fakeReply('hello');
+        $this->get('/api/command?q=hi');
+        Conversation::query()->delete();
+
+        $this->get('/api/command?q='.urlencode('+ hi'))->assertSee('hello');
+        $this->assertSame(1, Conversation::count());
+    }
+
+    public function test_plus_inside_a_word_is_part_of_the_question(): void
+    {
+        $this->fakeReply('8');
+        $this->get('/api/command?q='.urlencode('+5 +3'));
+
+        $this->assertDatabaseHas('conversation_messages', ['content' => '+5 +3']);
     }
 
     public function test_missing_query(): void

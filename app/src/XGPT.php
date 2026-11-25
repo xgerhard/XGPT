@@ -9,6 +9,7 @@ use App\Models\Conversation;
 use App\Models\ConversationMessage;
 use App\src\SettingsHandler;
 use App\Exceptions\RateLimitException;
+use Illuminate\Support\Facades\Cache;
 use Str;
 use Log;
 
@@ -52,10 +53,32 @@ class XGPT
         }
     }
 
+    public function continueLastConversation()
+    {
+        $key = $this->getViewerKey();
+        if ($key) {
+            $this->setConversionId(Cache::store('conversations')->get($key));
+        }
+    }
+
+    // Identifies the viewer within the channel, timers have no user
+    private function getViewerKey()
+    {
+        $user = $this->nbheaders->getUser();
+        $channel = $this->nbheaders->getChannel();
+
+        return $user ? implode(':', ['conversation', $channel->provider, $channel->providerId, $user->provider, $user->providerId]) : null;
+    }
+
     public function setMessage($message, $role = 'user')
     {
         if (!$this->conversation) {
             $this->generateConversion();
+        }
+
+        $key = $this->getViewerKey();
+        if ($key) {
+            Cache::store('conversations')->put($key, $this->conversation->id, now()->addHour());
         }
 
         $this->storeMessage($message, $role);

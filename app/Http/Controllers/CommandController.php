@@ -40,6 +40,9 @@ class CommandController extends Controller
             if (str_starts_with($messageParts[0], '#') && strlen($messageParts[0]) == 4) {
                 $XGPT->setConversionId(substr($messageParts[0], 1));
                 unset($messageParts[0]);
+            } elseif ($messageParts[0] == '+') {
+                $XGPT->continueLastConversation();
+                unset($messageParts[0]);
             }
 
             if (count($messageParts) == 0) {

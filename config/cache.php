@@ -53,6 +53,12 @@ return [
             'lock_path' => storage_path('framework/cache/locks'),
         ],
 
+        // Last conversation per viewer, cleared every day
+        'conversations' => [
+            'driver' => 'file',
+            'path' => storage_path('framework/cache/conversations'),
+        ],
+
         'storage' => [
             'driver' => 'storage',
             'disk' => env('CACHE_STORAGE_DISK'),
