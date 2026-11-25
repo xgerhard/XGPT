@@ -163,11 +163,8 @@ class XGPT
             $this->storeMessage($chatMessage->shownAnswer(), 'assistant');
 
             if ($chatMessage->second()) {
-                session(['conversion_id' => $this->conversation->id]);
-                session([$this->conversation->id => [
-                    'responseUrl' => $responseUrl,
-                    'message' => $chatMessage->second()
-                ]]);
+                // Sent after the response, so it's the second message in chat
+                defer(fn () => (new NightbotAPI)->sendMessageByResponseUrl($responseUrl, $chatMessage->second()));
             }
 
             return $chatMessage->first();

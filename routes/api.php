@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CommandController;
-use App\Http\Middleware\CommandMiddleware;
 use App\Http\Middleware\EnsureBotRequest;
 
 /*
@@ -16,4 +15,4 @@ use App\Http\Middleware\EnsureBotRequest;
 |
 */
 
-Route::get('/command', [CommandController::class, 'run'])->middleware([EnsureBotRequest::class, CommandMiddleware::class]);
+Route::get('/command', [CommandController::class, 'run'])->middleware(EnsureBotRequest::class);
