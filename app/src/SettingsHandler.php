@@ -9,7 +9,7 @@ use App\Models\UserSettings;
 class SettingsHandler
 {
     private $startInstructions =  'You are a helpful assistant for a <provider> chat.';
-    private $endInstructions = 'Keep the reply to one or two short sentences, at most <length> characters.';
+    private $lengthRule = 'Keep the reply to one or two short sentences, at most <length> characters.';
     private $showConversationId = 0;
     private $mentionUser = 1;
     private $showSponsorHeart = 1;
@@ -56,9 +56,9 @@ class SettingsHandler
         return str_replace('<provider>', ucfirst($provider), $this->startInstructions);
     }
 
-    public function getEndInstructions($provider)
+    public function getLengthRule($provider)
     {
         $length = $provider == 'youtube' ? 150 : 300;
-        return str_replace('<length>', $length, $this->endInstructions);
+        return str_replace('<length>', $length, $this->lengthRule);
     } 
 }

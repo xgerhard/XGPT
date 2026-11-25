@@ -2,125 +2,136 @@
 
 namespace App\src;
 
-use App\src\OpenAI;
-use App\src\NightbotAPI;
-use App\src\Badges;
 use App\Models\Conversation;
-use App\src\SettingsHandler;
+use App\Models\UserSettings;
+use xgerhard\nbheaders\NBHeaders;
 
+/**
+ * Answers a viewer's question with the settings of the channel
+ */
 class XGPT
 {
-    private $nbheaders = null;
-    private $conversation = null;
-    private $messages = [];
-    private $settings;
-    private $endInstructions;
-    private $openai;
+    private UserSettings $settings;
+    private string $lengthRule;
+    private ?Conversation $conversation = null;
 
-    public function __construct($nbheaders)
+    public function __construct(private NBHeaders $nbheaders)
     {
-        $this->nbheaders = $nbheaders;
+        $channel = $nbheaders->getChannel();
+        $settingsHandler = new SettingsHandler;
 
-        // Fetch settings for channel
-        $settings = new SettingsHandler;
-        $channel = $settings->getUserWithSettings(
-            $nbheaders->getChannel()->provider, 
-            $nbheaders->getChannel()->providerId
-        );
-        $this->settings = $channel->settings;
-        $this->endInstructions = $settings->getEndInstructions($nbheaders->getChannel()->provider);
-
-        // Init OpenAI API
-        $this->openai = new OpenAI;
-
-        // AI start instructions
-        $this->messages[] = [
-            'role' => 'developer',
-            'content' => $this->settings->start_instructions
-        ];
+        $this->settings = $settingsHandler->getUserWithSettings($channel->provider, $channel->providerId)->settings;
+        $this->lengthRule = $settingsHandler->getLengthRule($channel->provider);
     }
 
-    public function continueConversation($id)
+    /**
+     * Continues the conversation with this code, if it exists
+     */
+    public function continueConversation(string $id): void
     {
         $this->conversation = Conversation::find($id);
     }
 
-    public function continueLastConversation()
+    /**
+     * Continues the last conversation of the viewer, if there is one
+     */
+    public function continueLastConversation(): void
     {
-        $viewer = $this->getViewer();
+        $viewer = $this->viewerKey();
         if ($viewer) {
             $this->conversation = Conversation::lastOf($viewer);
         }
     }
 
-    // Identifies the viewer within the channel, timers have no user
-    private function getViewer()
+    /**
+     * Returns the chat message that answers the question
+     */
+    public function reply(string $question): string
+    {
+        $this->addQuestion($question);
+
+        $answer = (new OpenAI)->ask($this->prompt());
+
+        $message = $this->chatMessage($answer);
+        $this->conversation->addMessage('assistant', $message->shownAnswer());
+        $this->sendLater($message->second());
+
+        return $message->first();
+    }
+
+    private function addQuestion(string $question): void
+    {
+        if ($this->conversation) {
+            $this->conversation->touch();
+        } else {
+            $this->conversation = Conversation::start();
+        }
+
+        $viewer = $this->viewerKey();
+        if ($viewer) {
+            $this->conversation->rememberFor($viewer);
+        }
+
+        $this->conversation->addMessage('user', $question);
+    }
+
+    /**
+     * The channel's instructions, the conversation, and the length rule last since that's where it works best
+     */
+    private function prompt(): array
+    {
+        return [
+            ['role' => 'developer', 'content' => $this->settings->start_instructions],
+            ...$this->conversation->messages()->get(['role', 'content'])->toArray(),
+            ['role' => 'developer', 'content' => $this->lengthRule]
+        ];
+    }
+
+    private function chatMessage(string $answer): ChatMessage
+    {
+        return new ChatMessage(
+            $answer,
+            $this->nbheaders->getProvider() == 'youtube' ? 199 : 399,
+            $this->settings->mention_user ? $this->viewerName() : null,
+            $this->settings->show_conversation_id ? $this->conversation->id : null,
+            $this->nbheaders->getResponseUrl() !== null
+        );
+    }
+
+    /**
+     * Sends the message after the response, so it's the second one in chat
+     */
+    private function sendLater(?string $message): void
+    {
+        if ($message) {
+            $url = $this->nbheaders->getResponseUrl();
+            defer(fn () => (new NightbotAPI)->sendMessageByResponseUrl($url, $message));
+        }
+    }
+
+    /**
+     * Display name with badge, null on timers
+     */
+    private function viewerName(): ?string
+    {
+        $user = $this->nbheaders->getUser();
+        if (!$user) {
+            return null;
+        }
+
+        $badge = Badges::getBadge($user->provider, $user->providerId);
+
+        return $badge ? '['. $badge .'] '. $user->displayName : $user->displayName;
+    }
+
+    /**
+     * Identifies the viewer within the channel, null on timers
+     */
+    private function viewerKey(): ?string
     {
         $user = $this->nbheaders->getUser();
         $channel = $this->nbheaders->getChannel();
 
         return $user ? implode(':', [$channel->provider, $channel->providerId, $user->provider, $user->providerId]) : null;
-    }
-
-    public function setMessage($message)
-    {
-        if (!$this->conversation) {
-            $this->conversation = Conversation::start();
-        } else {
-            $this->conversation->touch();
-        }
-
-        $viewer = $this->getViewer();
-        if ($viewer) {
-            $this->conversation->rememberFor($viewer);
-        }
-
-        $this->conversation->addMessage('user', $message);
-    }
-
-    public function getMessages()
-    {
-        return array_merge(
-            $this->messages,
-            $this->conversation->messages()->get(['role', 'content'])->toArray(),
-            [[
-                'role' => 'developer',
-                'content' => $this->endInstructions
-            ]]
-        );
-    }
-
-    public function getResponse()
-    {
-        $username = false;
-        if ($this->nbheaders->getUser()) {
-            $user = $this->nbheaders->getUser();
-            $username = $user->displayName;
-
-            $badge = Badges::getBadge($user->provider, $user->providerId);
-            if ($badge) {
-                $username = '['. $badge .'] '. $username;
-            }
-        }
-
-        $message = $this->openai->ask($this->getMessages());
-
-        $responseUrl = $this->nbheaders->getResponseUrl();
-        $chatMessage = new ChatMessage(
-            $message,
-            $this->nbheaders->getProvider() == 'youtube' ? 199 : 399,
-            $this->settings->mention_user && $username ? $username : null,
-            $this->settings->show_conversation_id ? $this->conversation->id : null,
-            (bool) $responseUrl
-        );
-
-        $this->conversation->addMessage('assistant', $chatMessage->shownAnswer());
-
-        if ($chatMessage->second()) {
-            // Sent after the response, so it's the second message in chat
-            defer(fn () => (new NightbotAPI)->sendMessageByResponseUrl($responseUrl, $chatMessage->second()));
-        }
-
-        return $chatMessage->first();
     }
 }

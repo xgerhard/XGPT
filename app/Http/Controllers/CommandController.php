@@ -35,14 +35,14 @@ class CommandController extends Controller
         }
 
         try {
-            $XGPT = new XGPT($nbheaders);
+            $xgpt = new XGPT($nbheaders);
 
             $messageParts = explode(' ', $request->get('q'));
             if (str_starts_with($messageParts[0], '#') && strlen($messageParts[0]) == 4) {
-                $XGPT->continueConversation(substr($messageParts[0], 1));
+                $xgpt->continueConversation(substr($messageParts[0], 1));
                 unset($messageParts[0]);
             } elseif ($messageParts[0] == '+') {
-                $XGPT->continueLastConversation();
+                $xgpt->continueLastConversation();
                 unset($messageParts[0]);
             }
 
@@ -56,9 +56,7 @@ class CommandController extends Controller
                 return ' ';
             }
 
-            $XGPT->setMessage($message);
-            return $XGPT->getResponse();
-
+            return $xgpt->reply($message);
         } catch (\App\Exceptions\RateLimitException $e) {
             return 'Error: XGPT has reached it monthly usage limit. Support this project: https://github.com/sponsors/xgerhard ❤️';
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
