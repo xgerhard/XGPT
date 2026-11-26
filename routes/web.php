@@ -21,7 +21,8 @@ Route::get('/', function () {
     return view('home');
 });
 
-Route::get('login', [AuthController::class, 'redirectToNightbot'])->name('login');
+Route::view('login', 'login')->name('login');
+Route::get('login/nightbot', [AuthController::class, 'redirectToNightbot']);
 Route::get('login/nightbot/callback', [AuthController::class, 'handleNightbotCallback']);
 Route::get('login/{platform}', [AuthController::class, 'redirectToPlatform'])->whereIn('platform', array_keys(AuthController::SCOPES));
 Route::get('login/{platform}/callback', [AuthController::class, 'handlePlatformCallback'])->whereIn('platform', array_keys(AuthController::SCOPES));

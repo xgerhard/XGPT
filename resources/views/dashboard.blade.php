@@ -101,7 +101,7 @@
                         @if (!$nightbot)
                         <p>Add a command in your Fossabot dashboard, with this as response:</p>
                         <p><code>$(customapi https://xgpt.gerhard.dev/api/command?q=$(querystring))</code></p>
-                        <p>Using Nightbot? <a href="https://xgpt.gerhard.dev/login">Sign in with Nightbot</a> and we install the command for you.</p>
+                        <p>Using Nightbot? <a href="https://xgpt.gerhard.dev/login/nightbot">Sign in with Nightbot</a> and we install the command for you.</p>
                         @elseif (empty($commands))
                         <div class="callout-block callout-block-danger me-1">
                             <div class="content">

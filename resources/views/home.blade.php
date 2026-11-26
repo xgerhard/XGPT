@@ -43,7 +43,7 @@
                         <li class="list-inline-item"><a href="https://github.com/xgerhard/XGPT" target="blank"><i class="fa fa-github fa-fw"></i></a></li>
                         <li class="list-inline-item"><a href="mailto:hi@gerhard.dev" target="blank"><i class="fa fa-envelope fa-fw"></i></a></li>
                     </ul><!--//social-list-->
-                    <a href="https://xgpt.gerhard.dev/dashboard" class="btn btn-secondary d-none d-lg-flex">Sign in with Nightbot</a>
+                    <a href="https://xgpt.gerhard.dev/login" class="btn btn-secondary d-none d-lg-flex">Sign in</a>
                 </div><!--//docs-top-utilities-->
             </div><!--//container-->
         </div><!--//branding-->
@@ -162,7 +162,7 @@
                         <h2 class="section-heading">Automatic</h2>
                         <p>Sign in with Nightbot and we will handle the installation for you!</p>
                         <p>When you sign in to our dashboard you will be able to customize settings for your personal AI chatbot. Give the bot more and detailed instructions for just your stream. Provide attional information about you or your stream, so the bot can answer more specific questions. Want the bot to speak in a certain language, a certain way, include emojis, be more funny? Endless opportunities and alot of fun!</p>
-                        <p><a href="https://xgpt.gerhard.dev/login" class="btn btn-secondary">Sign in with Nightbot</a> <a href="https://xgpt.gerhard.dev/login/twitch" class="btn btn-secondary">Sign in with Twitch</a> <a href="https://xgpt.gerhard.dev/login/kick" class="btn btn-secondary">Sign in with Kick</a></p>
+                        <p><a href="https://xgpt.gerhard.dev/login" class="btn btn-secondary">Sign in</a></p>
                         <p>Use Fossabot? Sign in with Twitch or Kick to change your settings, the command you add yourself (see below).</p>
                     </section><!--//section-->
                     

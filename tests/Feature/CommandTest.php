@@ -298,7 +298,8 @@ class CommandTest extends TestCase
     {
         $this->get('/')->assertOk();
         $this->get('/dashboard')->assertRedirect('/login');
-        $this->assertStringStartsWith('https://api.nightbot.tv/oauth2/authorize', $this->get('/login')->headers->get('Location'));
+        $this->get('/login')->assertOk()->assertSee(['/login/nightbot', '/login/twitch', '/login/kick']);
+        $this->assertStringStartsWith('https://api.nightbot.tv/oauth2/authorize', $this->get('/login/nightbot')->headers->get('Location'));
         $this->assertStringStartsWith('https://id.twitch.tv/oauth2/authorize', $twitch = $this->get('/login/twitch')->headers->get('Location'));
         $this->assertStringNotContainsString('user%3Aread%3Aemail', $twitch);
         $kick = $this->get('/login/kick')->headers->get('Location');
