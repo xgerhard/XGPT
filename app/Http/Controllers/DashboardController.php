@@ -4,20 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Services\NightbotAPI;
 use App\Services\SettingsHandler;
-use Log;
 use Exception;
 use Session;
 
 class DashboardController extends Controller
 {
-
-    public function __construct()
-    {
-        
-    }
-
     public function index()
     {
         // Set default settings for new users
@@ -25,50 +17,13 @@ class DashboardController extends Controller
             $this->setDefaultSettings();
         }
 
-        // Signed in with another platform, the command can't be installed for them
-        $token = session('nightbot_api_token');
-        if (!$token) {
-            return view('dashboard', ['nightbot' => false, 'commands' => []]);
-        }
-
-        $nightbotApi = new NightbotAPI;
-        $nightbotApi->setAccessToken($token);
-        $commands = $nightbotApi->getCustomCommands();
-        $installedCommands = [];
-
-        if (isset($commands['commands']) and !empty($commands['commands'])) {
-            foreach ($commands['commands'] as $command) {
-                if (str_contains($command['message'], '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)')) {
-                    $installedCommands[] = $command;
-                }
-            }
-        }
-
-        return view('dashboard', [
-            'nightbot' => true,
-            'commands' => $installedCommands
-        ]);
+        return view('dashboard');
     }
 
     public function save(Request $request)
     {
-        if ($request->has('action')) {
-            if (!session('nightbot_api_token')) {
-                return redirect('/dashboard');
-            }
-
-            switch ($request->post('action')) {
-                case 'install_command':
-                    if ($request->has('command_code')) {
-                        $commandCode = $request->post('command_code');
-                        if (trim($commandCode) != '') {
-                            $this->installNightbotCommand($commandCode);
-                        }
-                    }
-                break;
-            }
-        } elseif ($request->has('save_settings')) {
-            Session::flash('message', 'Succesfully saved your settings!');
+        if ($request->has('save_settings')) {
+            Session::flash('message', 'Successfully saved your settings!');
             Session::flash('alert-class', 'callout-block-success'); 
 
             try {
@@ -96,37 +51,5 @@ class DashboardController extends Controller
         $settings = new SettingsHandler;
         $settings->setDefaultSettings($user);
         Auth::setUser($user->fresh());
-    }
-
-    private function installNightbotCommand($commandCode)
-    {
-        $token = session('nightbot_api_token');
-        if (!$token) {
-            return redirect('/logout');
-        }
-
-        $nightbotApi = new NightbotAPI;
-        $nightbotApi->setAccessToken($token);
-        $commands = $nightbotApi->getCustomCommands();
-
-        $commandData = [
-            'coolDown' => 5,
-            'message' => '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring))',
-            'name' => $commandCode,
-            'userLevel' => 'everyone'
-        ];
-
-        if (isset($commands['commands'])) {
-            foreach ($commands['commands'] as $command) {
-                if ($command['name'] == $commandCode) {
-                    // Update command
-                    $nightbotApi->editCustomCommand($command['_id'], $commandData);
-                    return;
-                }
-            }
-
-            // Create new command
-            $nightbotApi->addCustomCommand($commandData);
-        }
     }
 }

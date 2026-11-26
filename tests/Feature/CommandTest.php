@@ -235,26 +235,6 @@ class CommandTest extends TestCase
         $this->assertDatabaseHas('user_settings', ['user_id' => $user->id, 'api_key' => 'old-encrypted-key']);
     }
 
-    public function test_installs_the_command_without_a_token(): void
-    {
-        Http::fake(['api.nightbot.tv/*' => Http::response(['commands' => [['_id' => '1', 'name' => '!other', 'message' => 'x']]])]);
-
-        $this->actingAs($this->channel())->withSession(['nightbot_api_token' => 't'])
-            ->post('/dashboard', ['action' => 'install_command', 'command_code' => '!ai']);
-
-        Http::assertSent(fn ($r) => $r->method() === 'POST' && $r['message'] === '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring))');
-    }
-
-    public function test_installs_the_first_command_of_a_channel(): void
-    {
-        Http::fake(['api.nightbot.tv/*' => Http::response(['commands' => []])]);
-
-        $this->actingAs($this->channel())->withSession(['nightbot_api_token' => 't'])
-            ->post('/dashboard', ['action' => 'install_command', 'command_code' => '!ai']);
-
-        Http::assertSent(fn ($r) => $r->method() === 'POST' && $r['name'] === '!ai');
-    }
-
     public function test_openai_quota_error_is_chat_text(): void
     {
         Http::fake(['*' => Http::response(['error' => ['type' => 'insufficient_quota']], 429)]);
@@ -360,37 +340,23 @@ class CommandTest extends TestCase
         $this->assertDatabaseHas('users', ['provider' => 'kick', 'provider_id' => '7', 'name' => 'kickchan']);
     }
 
-    public function test_dashboard_without_nightbot_shows_the_fossabot_command(): void
+    public function test_dashboard_shows_both_commands_to_copy(): void
     {
         Http::preventStrayRequests();
         $user = $this->channel();
 
         $this->actingAs($user)->get('/dashboard')->assertOk()
-            ->assertSee('$(customapi https://xgpt.gerhard.dev/api/command?q=$(querystring))', false)
-            ->assertDontSee('Install command');
+            ->assertSee('!commands add !ai -cd=5 $(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring))', false)
+            ->assertSee('!addcmd -u 5 ai $(customapi https://xgpt.gerhard.dev/api/command?q=$(querystring))', false);
 
-        $this->post('/dashboard', ['action' => 'install_command', 'command_code' => '!ai'])->assertRedirect('/dashboard');
         $this->post('/dashboard', ['save_settings' => 1, 'start_instructions' => 'new'])->assertRedirect('/dashboard');
         $this->assertSame('new', $user->settings()->first()->start_instructions);
     }
-
-    public function test_dashboard_shows_an_installed_command(): void
-    {
-        Http::fake(['api.nightbot.tv/*' => Http::response(['commands' => [[
-            '_id' => '1', 'name' => '!mychat', 'coolDown' => 5, 'userLevel' => 'everyone',
-            'message' => '$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring)&token=abcd1234)',
-        ]]])]);
-
-        $this->actingAs($this->channel())->withSession(['nightbot_api_token' => 't'])
-            ->get('/dashboard')->assertOk()->assertSee('!mychat');
-    }
-
     public function test_dashboard_loads_and_saves_settings(): void
     {
-        Http::fake(['api.nightbot.tv/*' => Http::response(['commands' => []])]);
         $user = $this->channel();
 
-        $this->actingAs($user)->withSession(['nightbot_api_token' => 't'])->get('/dashboard')->assertOk();
+        $this->actingAs($user)->get('/dashboard')->assertOk();
         $this->post('/dashboard', ['save_settings' => 1, 'start_instructions' => 's'])->assertRedirect('/dashboard');
         $this->assertSame('s', $user->fresh()->settings->start_instructions);
     }

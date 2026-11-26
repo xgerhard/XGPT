@@ -8,7 +8,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <meta name="description" content="XGPT - Use Nightbot as AI chatbot powered by ChatGPT">
+    <meta name="description" content="XGPT - An AI chatbot for your stream chat, with Nightbot or Fossabot">
     <meta name="author" content="xgerhard">
     
     <!-- Google Font -->
@@ -80,10 +80,10 @@
 
                 <article class="docs-article" id="section-1">
                     <header class="docs-header">
-                        <h1 class="docs-heading">Hiya {{ auth()->user()->name }}! </h1>
+                        <h1 class="docs-heading">Hiya {{ auth()->user()->display_name }}! </h1>
                         <h2></h2>
                         <section class="docs-intro">
-                            <p>Welcome to your XGPT dashboard, from here you can access your settings and/or install our Nightbot command.</p>
+                            <p>Welcome to your XGPT dashboard, here you can change how the AI answers in your chat.</p>
                         </section><!--//docs-intro-->
                     </header>
                 </article>
@@ -97,67 +97,7 @@
                     </header>
                     <section class="docs-section" id="item-2-1">
                         <h2 class="section-heading">Commands</h2>
-
-                        @if (!$nightbot)
-                        <p>Add a command in your Fossabot dashboard, with this as response:</p>
-                        <p><code>$(customapi https://xgpt.gerhard.dev/api/command?q=$(querystring))</code></p>
-                        <p>Using Nightbot? <a href="/login/nightbot">Sign in with Nightbot</a> and we install the command for you.</p>
-                        @elseif (empty($commands))
-                        <div class="callout-block callout-block-danger me-1">
-                            <div class="content">
-                                <h4 class="callout-title">
-                                    <span class="callout-icon-holder">
-                                        <i class="fa fa-exclamation-triangle"></i>
-                                    </span><!--//icon-holder-->
-                                    Woops!
-                                </h4>
-                                <p>Looks like you haven't installed our Nightbot command yet, let us do it for you.</p>
-                            </div><!--//content-->
-                        </div>
-                        <p>
-                            <form action="" method="POST">
-                                @csrf <!-- {{ csrf_field() }} -->
-                                <input type="hidden" name="action" value="install_command"/>
-                                Command code: <input type="text" name="command_code" value="!ai" required/>
-                                <button type="submit" class="btn btn-secondary">Install command</button>
-                            </form>
-                        </p>
-                        <p><b>Note:</b> existing command with this command code will be overwritten.</p>
-                        @else
-                        <div class="callout-block callout-block-success">
-                            <div class="content">
-                                <h4 class="callout-title">
-                                    <span class="callout-icon-holder me-1">
-                                        <i class="fa fa-thumbs-up"></i> 
-                                    </span><!--//icon-holder-->
-                                    Awesome!
-                                </h4>
-                                <p>Looks like you have our Nightbot command installed.</p>
-                            </div><!--//content-->
-                        </div>
-                        <div class="table-responsive my-4">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">Command code</th>
-                                        <th scope="col">Userlevel</th>
-                                        <th scope="col">Cooldown</th>
-                                        <th scope="col">Message</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                @foreach ($commands as $command)
-                                    <tr>
-                                        <th>{{ $command['name'] }}</th>
-                                        <td>{{ $command['userLevel'] }}</td>
-                                        <td>{{ $command['coolDown'] }}</td>
-                                        <td>{{ $command['message'] }}</td>
-                                    </tr>
-                                @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        @endif
+                        @include('partials.commands')
                     </section><!--//section-->
                 </article><!--//docs-article-->
 
@@ -167,18 +107,18 @@
                         <header class="docs-header">
                             <h1 class="docs-heading">Settings</h1>
                             <section class="docs-intro">
-                                <p>Manage your channels settings here. These settings only effect your channel, these settings have no effect if you use our command in other channels.</p>
+                                <p>Manage your channels settings here. These settings only affect your channel.</p>
                             </section><!--//docs-intro-->
                         </header>
                         <section class="docs-section" id="item-3-1">
                             <h2 class="section-heading">AI instructions</h2>
-                            <p>These instructions will be provided to the AI at the start of every chat, so the AI knows what it is suppose to be doing. You can provide various instructions, in your desired language. You can also provide extra information about your channel, so the AI can use this info for better answers.<br/>A few examples:
+                            <p>These instructions will be provided to the AI at the start of every chat, so the AI knows what it is supposed to do. You can provide various instructions, in your desired language. You can also provide extra information about your channel, so the AI can use this info for better answers.<br/>A few examples:
                                 <ul>
-                                    <li>You are a helpful assistant for a Twitch chat.</li>
-                                    <li>You are an assistant for a Twitch chat where viewers can ask you questions, be snappy, try to roast the viewer.</li>
-                                    <li>You are an assistant for a Twitch chat, reply with an Texan accent.</li>
-                                    <li>You are an assistant for a Twitch chat, UwU'fy your replies, include emojis at the end of each message.</li>
-                                    <li>You are an assisant for the Twitch channel xgerhard, reply in dutch <i>(This instruction could be provided in dutch)</i></li>
+                                    <li>You are a helpful assistant for my stream chat.</li>
+                                    <li>You are an assistant for my stream chat where viewers can ask you questions, be snappy, try to roast the viewer.</li>
+                                    <li>You are an assistant for my stream chat, reply with a Texan accent.</li>
+                                    <li>You are an assistant for my stream chat, UwU'fy your replies, include emojis at the end of each message.</li>
+                                    <li>You are an assistant for the channel xgerhard, reply in Dutch <i>(This instruction could also be written in Dutch)</i></li>
                                 </ul>
                             </p>
                             <div class="form-group">
@@ -188,8 +128,8 @@
                         </section><!--//section-->
                         <section class="docs-section" id="item-3-3">
                             <h2 class="section-heading">Conversation ID</h2>
-                            <p>When enabled, each message ends with a hashtag and a code, for example #abc. This code can be used to continue a conversation, for example to use earlier info in your next question. View examples: <a href="/#item-1-2" target="blank">here</a>.<br/>
-                                While this feature is convenient, most of the time it's not used. Most users just ask one thing at the time and don't have a full conversations with the bot.<br/>
+                            <p>Viewers can always continue their own last conversation by starting with a +, for example: <b>!ai + tell me more</b>.<br/>
+                                When enabled, each message also ends with a hashtag and a code, for example #abc. Anyone can use this code to continue that conversation. View examples: <a href="/#item-1-2" target="blank">here</a>.<br/>
                                 It's disabled by default, which leaves space for a few extra characters of other info.
                             </p>
                             <div class="form-group">

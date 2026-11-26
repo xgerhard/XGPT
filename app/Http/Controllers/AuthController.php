@@ -30,9 +30,6 @@ class AuthController extends Controller
 
         $this->login($nightbotUser['provider'], $nightbotUser['providerId'], $nightbotUser['name'], $nightbotUser['displayName']);
 
-        // Only kept in the session, to install the command
-        session(['nightbot_api_token' => $nightbotUser->token]);
-
         return redirect('/dashboard');
     }
 
