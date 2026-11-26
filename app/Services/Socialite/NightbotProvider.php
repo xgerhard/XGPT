@@ -21,6 +21,12 @@ class NightbotProvider extends AbstractProvider
         );
     }
 
+    // Nightbot refuses an empty scope, signing in needs none
+    protected function getCodeFields($state = null)
+    {
+        return Arr::except(parent::getCodeFields($state), 'scope');
+    }
+
     protected function getTokenUrl()
     {
         return 'https://api.nightbot.tv/oauth2/token';
