@@ -10,7 +10,7 @@ use SocialiteProviders\Manager\OAuth2\User;
 class NightbotProvider extends AbstractProvider
 {
     public const IDENTIFIER = 'NIGHTBOT';
-    protected $scopes = ['commands'];
+    protected $scopes = [];
     protected $scopeSeparator = ' ';
 
     protected function getAuthUrl($state)
