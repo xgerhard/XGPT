@@ -23,8 +23,8 @@ Route::get('/', function () {
 
 Route::get('login', [AuthController::class, 'redirectToNightbot'])->name('login');
 Route::get('login/nightbot/callback', [AuthController::class, 'handleNightbotCallback']);
-Route::get('login/twitch', [AuthController::class, 'redirectToTwitch']);
-Route::get('login/twitch/callback', [AuthController::class, 'handleTwitchCallback']);
+Route::get('login/{platform}', [AuthController::class, 'redirectToPlatform'])->whereIn('platform', array_keys(AuthController::SCOPES));
+Route::get('login/{platform}/callback', [AuthController::class, 'handlePlatformCallback'])->whereIn('platform', array_keys(AuthController::SCOPES));
 Route::get('logout', [AuthController::class, 'logout']);
 
 Route::middleware(['auth'])->group(function () {

@@ -47,6 +47,12 @@ return [
         'redirect' => env('APP_URL').'/login/twitch/callback',
     ],
 
+    'kick' => [
+        'client_id' => env('KICK_CLIENT_ID'),
+        'client_secret' => env('KICK_CLIENT_SECRET'),
+        'redirect' => env('APP_URL').'/login/kick/callback',
+    ],
+
     'cloudflare' => [
         'secret' => env('CLOUDFLARE_SECRET'),
     ],

@@ -9,10 +9,16 @@ use Illuminate\Http\RedirectResponse;
 use App\Models\User;
 
 /**
- * Signs in a channel with Nightbot or Twitch, both find the same channel by its platform id
+ * Signs in a channel with Nightbot, Twitch or Kick, both find the same channel by its platform id
  */
 class AuthController extends Controller
 {
+    // As few permissions as each platform allows, Kick requires one to read the user
+    public const SCOPES = [
+        'twitch' => [],
+        'kick' => ['user:read'],
+    ];
+
     public function redirectToNightbot()
     {
         return Socialite::driver('nightbot')->redirect();
@@ -30,16 +36,16 @@ class AuthController extends Controller
         return redirect('/dashboard');
     }
 
-    public function redirectToTwitch()
+    public function redirectToPlatform(string $platform)
     {
-        return Socialite::driver('twitch')->setScopes([])->redirect();
+        return Socialite::driver($platform)->setScopes(self::SCOPES[$platform])->redirect();
     }
 
-    public function handleTwitchCallback()
+    public function handlePlatformCallback(string $platform)
     {
-        $twitchUser = Socialite::driver('twitch')->user();
+        $platformUser = Socialite::driver($platform)->user();
 
-        $this->login('twitch', $twitchUser->getId(), $twitchUser['login'], $twitchUser->getName());
+        $this->login($platform, $platformUser->getId(), $platformUser['login'] ?? $platformUser->getNickname(), $platformUser->getName());
 
         return redirect('/dashboard');
     }

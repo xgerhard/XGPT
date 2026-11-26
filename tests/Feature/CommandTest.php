@@ -301,6 +301,10 @@ class CommandTest extends TestCase
         $this->assertStringStartsWith('https://api.nightbot.tv/oauth2/authorize', $this->get('/login')->headers->get('Location'));
         $this->assertStringStartsWith('https://id.twitch.tv/oauth2/authorize', $twitch = $this->get('/login/twitch')->headers->get('Location'));
         $this->assertStringNotContainsString('user%3Aread%3Aemail', $twitch);
+        $kick = $this->get('/login/kick')->headers->get('Location');
+        $this->assertStringStartsWith('https://id.kick.com/oauth/authorize', $kick);
+        $this->assertStringContainsString('code_challenge=', $kick);
+        $this->get('/login/other')->assertNotFound();
     }
 
     public function test_first_login_creates_the_channel(): void
@@ -336,6 +340,16 @@ class CommandTest extends TestCase
         $this->get('/login/twitch/callback');
 
         $this->assertDatabaseHas('users', ['provider' => 'twitch', 'provider_id' => '5', 'name' => 'newchan', 'display_name' => 'NewChan']);
+    }
+
+    public function test_kick_login_creates_a_channel(): void
+    {
+        $kickUser = (new SocialiteUser)->setRaw(['name' => 'kickchan'])->map(['id' => '7', 'nickname' => 'kickchan', 'name' => 'kickchan']);
+        Socialite::shouldReceive('driver->user')->andReturn($kickUser);
+
+        $this->get('/login/kick/callback')->assertRedirect('/dashboard');
+
+        $this->assertDatabaseHas('users', ['provider' => 'kick', 'provider_id' => '7', 'name' => 'kickchan']);
     }
 
     public function test_dashboard_without_nightbot_shows_the_fossabot_command(): void

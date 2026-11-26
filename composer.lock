@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e48ea2e192f0392c124d90c4a6815eb6",
+    "content-hash": "fb11c9b61c41b4088c491a7d80a1d3dc",
     "packages": [
         {
             "name": "brick/math",
@@ -3680,6 +3680,55 @@
                 "source": "https://github.com/ramsey/uuid/tree/4.10.0"
             },
             "time": "2026-11-14T23:23:20+00:00"
+        },
+        {
+            "name": "socialiteproviders/kick",
+            "version": "5.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/SocialiteProviders/Kick.git",
+                "reference": "90f1e0311f04f2dd58a7f1e50e5da0bbc2b4b695"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/SocialiteProviders/Kick/zipball/90f1e0311f04f2dd58a7f1e50e5da0bbc2b4b695",
+                "reference": "90f1e0311f04f2dd58a7f1e50e5da0bbc2b4b695",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.0",
+                "socialiteproviders/manager": "^4.4|^4.8|^4.8.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SocialiteProviders\\Kick\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ali Fadaei",
+                    "email": "itsalifadaei@gmail.com"
+                }
+            ],
+            "description": "Kick OAuth2 Provider for Laravel Socialite",
+            "keywords": [
+                "kick",
+                "laravel",
+                "oauth",
+                "provider",
+                "socialite"
+            ],
+            "support": {
+                "docs": "https://socialiteproviders.com/kick",
+                "issues": "https://github.com/socialiteproviders/providers/issues",
+                "source": "https://github.com/socialiteproviders/providers"
+            },
+            "time": "2026-07-21T00:56:01+00:00"
         },
         {
             "name": "socialiteproviders/manager",
