@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\CommandController;
 use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -124,7 +125,6 @@ class CommandTest extends TestCase
             unset($_SERVER['HTTP_NIGHTBOT_CHANNEL'], $_SERVER['HTTP_NIGHTBOT_USER']);
         }
 
-        $this->get('/api/command?q='.urlencode('+'))->assertSee('Missing query');
     }
 
     public function test_plus_starts_a_new_conversation_when_the_last_one_is_deleted(): void
@@ -163,9 +163,16 @@ class CommandTest extends TestCase
         $this->assertDatabaseHas('conversation_messages', ['content' => '+5 +3']);
     }
 
-    public function test_missing_query(): void
+    public function test_without_a_question_replies_without_asking_the_ai(): void
     {
-        $this->get('/api/command')->assertOk()->assertSee('Missing query');
+        Http::preventStrayRequests();
+
+        foreach (['/api/command', '/api/command?q=', '/api/command?q=%2B'] as $url) {
+            $this->assertContains($this->get($url)->assertOk()->getContent(), CommandController::NO_QUESTION_REPLIES);
+        }
+
+        $this->assertSame('', trim($this->get('/api/command?q='.urlencode('😂 👍'))->getContent()));
+        Http::assertNothingSent();
     }
 
     public function test_sends_the_channel_prompt_and_the_length_rule(): void
@@ -269,7 +276,7 @@ class CommandTest extends TestCase
         Log::spy();
         Http::fake(['*' => Http::failedConnection('timed out')]);
 
-        $this->get('/api/command?q=hi')->assertOk()->assertSee('took to long');
+        $this->get('/api/command?q=hi')->assertOk()->assertSee('took too long');
         Log::shouldHaveReceived('warning')->once();
     }
 

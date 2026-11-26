@@ -3,16 +3,35 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use App\Services\XGPT;
 use App\Services\Bots\BotRequest;
 
 class CommandController extends Controller
 {
+    // Without a question, kept light since it can be the first thing a viewer sees from the bot
+    public const NO_QUESTION_REPLIES = [
+        'How can I help you today?',
+        "Hey, what's up? Ask me something!",
+        "Bleep bloop, I'm here. What do you need?",
+        "I'm listening. Go ahead, ask away.",
+        "Ready when you are. What's the question?",
+        'Beep. Awaiting input. Try asking me something!',
+        "Didn't catch a question there, try again?",
+        'Give me something to work with! Ask me anything.',
+        'Booting up... now ask me something.',
+        'You rang? What can I do for you?',
+        '*robot noises* Go on, ask your question.',
+        "I've got answers, you've got to ask a question first.",
+        "Say the word and I'll do my best to help.",
+        "Still here, still listening. What's on your mind?",
+    ];
+
     public function run(Request $request, BotRequest $bot)
     {
         if (!$request->has('q') || $request->get('q') == '') {
-            return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
+            return Arr::random(self::NO_QUESTION_REPLIES);
         }
 
         try {
@@ -28,7 +47,7 @@ class CommandController extends Controller
             }
 
             if (count($messageParts) == 0) {
-                return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
+                return Arr::random(self::NO_QUESTION_REPLIES);
             }
 
             $message = implode(' ', $messageParts);
@@ -39,13 +58,13 @@ class CommandController extends Controller
 
             return $xgpt->reply($message);
         } catch (\App\Exceptions\RateLimitException $e) {
-            return 'Error: XGPT has reached it monthly usage limit. Support this project: https://github.com/sponsors/xgerhard ❤️';
+            return 'Error: XGPT has reached its monthly usage limit. Support this project: https://github.com/sponsors/xgerhard ❤️';
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             Log::warning($e->getMessage());
-            return 'Error: ChatGPT took to long to respond. Please try again in a bit. ResidentSleeper';
+            return 'Error: The AI took too long to respond. Please try again in a bit.';
         } catch (\Throwable $e) {
             report($e);
-            return 'Error: Unknown error occured, please contact xgerhard';
+            return 'Error: Unknown error occurred, please contact xgerhard';
         }
     }
 
