@@ -21,7 +21,8 @@
 </head>
 <body>
     <main class="container text-center py-5" style="max-width: 360px">
-        <div class="site-logo mb-4"><a class="navbar-brand" href="/"><span class="logo-text">X<span class="text-alt">GPT</span></span></a></div>
+        <div class="site-logo mb-2"><a class="navbar-brand" href="/"><span class="logo-text">X<span class="text-alt">GPT</span></span></a></div>
+        <p class="mb-4">Sign in to customize your AI chatbot.</p>
         <div class="d-grid gap-3">
             <a href="/login/nightbot" class="btn btn-platform btn-nightbot">Sign in with Nightbot</a>
             <div class="or">or</div>
