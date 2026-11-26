@@ -67,18 +67,18 @@ class BotRequestTest extends TestCase
         Cache::put('nightbot-ip:127.0.0.1', 1);
         $this->nightbotHeaders();
 
-        $this->get('/api/command?q=hi')->assertSee('Bob: hello');
+        $this->get('/api/command?q=hi')->assertSee('@Bob: hello');
     }
 
-    private function fossabotHeaders(bool $withUser = true): void
+    private function fossabotHeaders(bool $withUser = true, string $provider = 'twitch'): void
     {
         $this->withHeaders([
             'x-fossabot-customapitoken' => 'token123',
-            'x-fossabot-channelprovider' => 'twitch',
+            'x-fossabot-channelprovider' => $provider,
             'x-fossabot-channelproviderid' => '1',
             'x-fossabot-validateurl' => 'https://evil.example/validate',
         ] + ($withUser ? [
-            'x-fossabot-message-userprovider' => 'twitch',
+            'x-fossabot-message-userprovider' => $provider,
             'x-fossabot-message-userproviderid' => '2',
             'x-fossabot-message-userdisplayname' => 'Bob',
         ] : []));
@@ -89,10 +89,18 @@ class BotRequestTest extends TestCase
         Http::fake(['api.fossabot.com/*' => Http::response(['context_url' => 'https://api.fossabot.com/v2/customapi/context/token123'])] + $this->answer());
         $this->fossabotHeaders();
 
-        $this->get('/api/command?q=hi')->assertSee('Bob: hello');
+        $this->get('/api/command?q=hi')->assertSee('@Bob: hello');
 
         Http::assertSent(fn ($r) => $r->url() === 'https://api.fossabot.com/v2/customapi/validate/token123');
         Http::assertNotSent(fn ($r) => str_contains($r->url(), 'evil.example'));
+    }
+
+    public function test_youtube_viewer_is_named_without_an_at(): void
+    {
+        Http::fake(['api.fossabot.com/*' => Http::response(['context_url' => 'x'])] + $this->answer());
+        $this->fossabotHeaders(provider: 'youtube');
+
+        $this->assertSame('Bob: hello', $this->get('/api/command?q=hi')->getContent());
     }
 
     public function test_fossabot_timer_has_no_viewer(): void

@@ -50,7 +50,7 @@ class CommandTest extends TestCase
         $reply = $this->get('/api/command?q=hi')->assertOk()->getContent();
         $id = Conversation::firstOrFail()->id;
         $this->assertMatchesRegularExpression('/^[a-z]{3}$/', $id);
-        $this->assertSame("xgerhard: hello there #$id", $reply);
+        $this->assertSame("@xgerhard: hello there #$id", $reply);
 
         $this->get('/api/command?q='.urlencode("#$id again"))->assertSee("#$id", false);
         $this->assertSame(1, Conversation::count());
@@ -61,7 +61,7 @@ class CommandTest extends TestCase
     {
         $this->fakeReply('hello there');
 
-        $this->assertSame('xgerhard: hello there', $this->get('/api/command?q=hi')->getContent());
+        $this->assertSame('@xgerhard: hello there', $this->get('/api/command?q=hi')->getContent());
     }
 
     public function test_sends_the_rest_of_a_long_reply_to_the_response_url(): void
@@ -169,8 +169,8 @@ class CommandTest extends TestCase
 
         foreach (['/api/command', '/api/command?q=', '/api/command?q=%2B'] as $url) {
             $reply = $this->get($url)->assertOk()->getContent();
-            $this->assertStringStartsWith('xgerhard: ', $reply);
-            $this->assertContains(substr($reply, strlen('xgerhard: ')), CommandController::NO_QUESTION_REPLIES);
+            $this->assertStringStartsWith('@xgerhard: ', $reply);
+            $this->assertContains(substr($reply, strlen('@xgerhard: ')), CommandController::NO_QUESTION_REPLIES);
         }
 
         $this->channel()->settings()->update(['mention_user' => 0]);

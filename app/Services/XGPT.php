@@ -121,7 +121,7 @@ class XGPT
     }
 
     /**
-     * Display name with badge, null on timers
+     * Name to mention, with badge, null on timers
      */
     private function viewerName(): ?string
     {
@@ -130,7 +130,9 @@ class XGPT
         }
 
         $badge = Badges::getBadge($this->bot->userProvider, $this->bot->userId);
+        // YouTube names can have spaces, an @ wouldn't mention them
+        $name = ($this->bot->platform() == 'youtube' ? '' : '@') . $this->bot->userName;
 
-        return $badge ? '['. $badge .'] '. $this->bot->userName : $this->bot->userName;
+        return $badge ? '['. $badge .'] '. $name : $name;
     }
 }
