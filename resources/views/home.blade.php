@@ -54,24 +54,23 @@
         <div id="docs-sidebar" class="docs-sidebar">
             <nav id="docs-nav" class="docs-nav navbar">
                 <ul class="section-items list-unstyled nav flex-column pb-3">
-                    <li class="nav-item section-title"><a class="nav-link scrollto active" href="#section-1"><span class="theme-icon-holder me-2"><i class="fa fa-map-signs"></i></span>Introduction</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-1-1">Examples</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-1-2">Conversations</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-1-3">Nightbot</a></li>
-                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-2"><span class="theme-icon-holder me-2"><i class="fa fa-usd"></i></span>Pricing</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-2-1">Sponsors</a></li>
-                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-3"><span class="theme-icon-holder me-2"><i class="fa fa-arrow-down"></i></span>Installation</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-3-1">Commands</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-3-2">Settings</a></li>
-                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-4"><span class="theme-icon-holder me-2"><i class="fa fa-lightbulb-o"></i></span>Help</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-4-1">Contact</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-4-2">Contribute</a></li>
+                    <li class="nav-item section-title"><a class="nav-link scrollto active" href="#introduction"><span class="theme-icon-holder me-2"><i class="fa fa-map-signs"></i></span>Introduction</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#examples">Examples</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#conversations">Conversations</a></li>
+                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#pricing"><span class="theme-icon-holder me-2"><i class="fa fa-usd"></i></span>Pricing</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#sponsors">Sponsors</a></li>
+                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#installation"><span class="theme-icon-holder me-2"><i class="fa fa-arrow-down"></i></span>Installation</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#commands">Commands</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#settings">Settings</a></li>
+                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#help"><span class="theme-icon-holder me-2"><i class="fa fa-lightbulb-o"></i></span>Help</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#contact">Contact</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#contribute">Contribute</a></li>
                 </ul>
             </nav><!--//docs-nav-->
         </div><!--//docs-sidebar-->
         <div class="docs-content">
             <div class="container">
-                <article class="docs-article" id="section-1">
+                <article class="docs-article" id="introduction">
                     <header class="docs-header">
                         <h1 class="docs-heading">XGPT <span class="docs-time">Last updated: 26 Nov 2026</span></h1>
                         <h2>An AI chatbot for your stream chat, with Nightbot or Fossabot</h2>
@@ -85,11 +84,11 @@
                                 <span class="callout-icon-holder me-1">
                                     <i class="fa fa-info-circle"></i>
                                 </span><!--//icon-holder-->
-                                <a href="#section-3">Don't feel like reading? Click me to skip to installation.</a>
+                                <a href="#installation">Don't feel like reading? Click me to skip to installation.</a>
                             </h4>
                         </div><!--//content-->
                     </div><!--//callout-block-->
-                    <section class="docs-section" id="item-1-1">
+                    <section class="docs-section" id="examples">
                         <h2 class="section-heading">Examples</h2>
                         <p>A couple examples, need help, info, or a fun chat?</p>
                         <div class="simplelightbox-gallery-intro row mb-3">
@@ -105,9 +104,9 @@
                         </div><!--//gallery-->
                     </section><!--//section-->
                     
-                    <section class="docs-section" id="item-1-2">
+                    <section class="docs-section" id="conversations">
                         <h2 class="section-heading">Conversations</h2>
-                        <p>By default each message sent to the bot is seen as a new conversation, however you can continue your last conversation of the past 2 hours by putting a + at the <u>start</u> of your new message, for example: <b>!ai + tell me more</b>. If the streamer enabled conversation IDs in the dashboard, you can also use the code at the end of the bot's message, for example to join a conversation of someone else.</p>
+                        <p>By default each message sent to the bot is seen as a new conversation, however you can continue your last conversation by putting a + at the <u>start</u> of your new message, for example: <b>!ai + tell me more</b>.</p>
                         <div class="simplelightbox-gallery-convo row mb-3">
                             <div class="col-12 col-md-4 mb-3">
                                 <a href="assets/images/convo104d6994f86f4e1cab4370d045f74f052.png"><img class="figure-img img-fluid shadow rounded" src="assets/images/convo104d6994f86f4e1cab4370d045f74f052.png" alt="Rickrolling"/></a>
@@ -121,67 +120,58 @@
                         </div><!--//gallery-->
                     </section><!--//section-->
                     
-                    <section class="docs-section" id="item-1-3">
-                        <h2 class="section-heading">Nightbot</h2>
-                        <p>Nightbot is a chat bot for Twitch, YouTube, and Trovo that allows you to automate your live stream's chat with moderation and new features, allowing you to spend more time entertaining your viewers.</p>
-                        <p>Setting up Nightbot is easy, simply sign in at: <a href="https://nightbot.tv/" target="blank">nightbot.tv</a> and click the "Join Channel" button, that's it!</p>
-                        <h5>Which bots are supported?</h5>
-                        <p>Nightbot and Fossabot, on every platform they support. See <a href="#section-3">installation</a>.</p>                        
-                    </section><!--//section-->
                 </article>
                 
-                <article class="docs-article" id="section-2">
+                <article class="docs-article" id="pricing">
                     <header class="docs-header">
                         <h1 class="docs-heading">Pricing</h1>
                         <section class="docs-intro">
-                            <p><b>Free!</b> This app is, and will always be free. However please read this article carefully.</p>
-                            <p>This app is using the OpenAI API, which is <b>not free</b>. The costs are flexible, pay for what you use. Which means more users, higher costs.</p>
-                            <p>More information here: <a href="https://platform.openai.com/docs/pricing" target="blank">platform.openai.com/docs/pricing</a>. We use the <b>gpt-6-luna</b> model. Tokens are calculated based on the amount of text that has to be processed. A helpful rule of thumb is that one token generally corresponds to ~4 characters of text for common English text. This translates to roughly ¾ of a word (so 100 tokens ~= 75 words).<p>
+                            <p><b>Free!</b> XGPT is free to use, for every channel.</p>
+                            <p>The AI behind it isn't free though: every answer costs a small amount at OpenAI, so more chatters means higher costs.</p>
                             <h5>Who is paying?</h5>
-                            <p>The community. Users who want to support this project can help cover the costs here: <a href="https://github.com/sponsors/xgerhard" target="blank">github.com/sponsors/xgerhard</a>. Once we run out of tokens for the month, the app will stop working for everyone. Tokens reset on the first day of the month.</p>
-                            <p>For the generous users who help keeping this app running, we added a few extra features, see <a href="#item-2-1">Sponsors</a>.</p>
+                            <p>The community. If you like XGPT, you can help cover the costs at <a href="https://github.com/sponsors/xgerhard" target="blank">github.com/sponsors/xgerhard</a>.</p>
+                            <p>There's a monthly budget. When it runs out, XGPT stops answering until the next month.</p>
                         </section><!--//docs-intro-->
                     </header>
-                    <section class="docs-section" id="item-2-1">
+                    <section class="docs-section" id="sponsors">
                         <h2 class="section-heading">Sponsors</h2>
-                        <p>Do you, or want to, sponsor this app? Great! Head over to: <a href="https://github.com/sponsors/xgerhard" target="blank">github.com/sponsors/xgerhard</a>.</p>
-                        <p>Sponsors get a heart ❤️ in front of their name when using the app as recognition of their generosity.</p>
+                        <p>Sponsors get a ❤️ in front of their name when they use XGPT, as a thank you.</p>
                         <a href="assets/images/sponsord0376151b3df41e34cdc7fcdfcbfcb5b.png"><img class="figure-img img-fluid shadow rounded" src="assets/images/sponsord0376151b3df41e34cdc7fcdfcbfcb5b.png" alt="Sponsors heart"/></a>
                     </section><!--//section-->
                 </article><!--//docs-article-->
                 
                 
-                <article class="docs-article" id="section-3">
+                <article class="docs-article" id="installation">
                     <header class="docs-header">
                         <h1 class="docs-heading">Installation</h1>
                         <section class="docs-intro">
                             <p>Copy the command for your bot and you are ready to go. Sign in only to change the settings.</p>
                         </section><!--//docs-intro-->
                     </header>
-                     <section class="docs-section" id="item-3-1">
+                     <section class="docs-section" id="commands">
                         <h2 class="section-heading">Commands</h2>
                         @include('partials.commands')
                     </section><!--//section-->
                     
-                    <section class="docs-section" id="item-3-2">
+                    <section class="docs-section" id="settings">
                         <h2 class="section-heading">Settings</h2>
                         <p>Sign in to customize your AI chatbot. Give the bot instructions for just your stream, or information about you or your stream so it can answer more specific questions. Want it to speak in a certain language, in a certain way, with emojis, or be more funny? Endless options and a lot of fun!</p>
                         <p><a href="/login" class="btn btn-secondary">Sign in</a></p>
                     </section><!--//section-->
                 </article><!--//docs-article-->
                 
-                <article class="docs-article" id="section-4">
+                <article class="docs-article" id="help">
                     <header class="docs-header">
                         <h1 class="docs-heading">Help</h1>
                         <section class="docs-intro">
                             <p></p>
                         </section><!--//docs-intro-->
                     </header>
-                     <section class="docs-section" id="item-4-1">
+                     <section class="docs-section" id="contact">
                         <h2 class="section-heading">Contact</h2>
                         <p>Need help with the installation, any questions, or a thank you, feel free to send me a mail at: <a href="mailto:hi@gerhard.dev" target="blank">hi@gerhard.dev</a>.</p>
                     </section><!--//section-->
-                    <section class="docs-section" id="item-4-2">
+                    <section class="docs-section" id="contribute">
                         <h2 class="section-heading">Contribute</h2>
                         <p>The source code is viewable for everyone, have suggestions, improvements, or just curious? View this app on GitHub: <a href="https://github.com/xgerhard/XGPT" target="blank">GitHub.com/xgerhard/XGPT</a>.</p>
                     </section><!--//section-->

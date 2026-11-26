@@ -54,17 +54,17 @@
         <div id="docs-sidebar" class="docs-sidebar">
             <nav id="docs-nav" class="docs-nav navbar">
                 <ul class="section-items list-unstyled nav flex-column pb-3">
-                    <li class="nav-item section-title"><a class="nav-link scrollto active" href="#section-1"><span class="theme-icon-holder me-2"><i class="fa fa-map-signs"></i></span>Home</a></li>
-                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-2"><span class="theme-icon-holder me-2"><i class="fa fa-arrow-down"></i></span>Installation</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-2-1">Commands</a></li>
-                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-3"><span class="theme-icon-holder me-2"><i class="fa fa-gear"></i></span>Settings</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-3-1">AI instructions</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-3-3">Conversation ID</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-3-4">Mention user</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-3-5">Sponsor heart</a></li>
-                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#section-4"><span class="theme-icon-holder me-2"><i class="fa fa-lightbulb-o"></i></span>Help</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-4-1">Contact</a></li>
-                    <li class="nav-item"><a class="nav-link scrollto" href="#item-4-2">Contribute</a></li>
+                    <li class="nav-item section-title"><a class="nav-link scrollto active" href="#welcome"><span class="theme-icon-holder me-2"><i class="fa fa-map-signs"></i></span>Home</a></li>
+                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#installation"><span class="theme-icon-holder me-2"><i class="fa fa-arrow-down"></i></span>Installation</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#commands">Commands</a></li>
+                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#settings"><span class="theme-icon-holder me-2"><i class="fa fa-gear"></i></span>Settings</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#ai-instructions">AI instructions</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#conversation-id">Conversation ID</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#mention-user">Mention user</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#sponsor-heart">Sponsor heart</a></li>
+                    <li class="nav-item section-title mt-3"><a class="nav-link scrollto" href="#help"><span class="theme-icon-holder me-2"><i class="fa fa-lightbulb-o"></i></span>Help</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#contact">Contact</a></li>
+                    <li class="nav-item"><a class="nav-link scrollto" href="#contribute">Contribute</a></li>
                 </ul>
             </nav><!--//docs-nav-->
         </div><!--//docs-sidebar-->
@@ -78,7 +78,7 @@
                 </div>
                 @endif
 
-                <article class="docs-article" id="section-1">
+                <article class="docs-article" id="welcome">
                     <header class="docs-header">
                         <h1 class="docs-heading">Hiya {{ auth()->user()->display_name }}! </h1>
                         <h2></h2>
@@ -88,21 +88,21 @@
                     </header>
                 </article>
 
-                <article class="docs-article" id="section-2">
+                <article class="docs-article" id="installation">
                     <header class="docs-header">
                         <h1 class="docs-heading">Installation</h1>
                         <section class="docs-intro">
                             <p></p>
                         </section><!--//docs-intro-->
                     </header>
-                    <section class="docs-section" id="item-2-1">
+                    <section class="docs-section" id="commands">
                         <h2 class="section-heading">Commands</h2>
                         @include('partials.commands')
                     </section><!--//section-->
                 </article><!--//docs-article-->
 
-                <article class="docs-article" id="section-3">
-                    <form action="" method="POST" id="settings">
+                <article class="docs-article" id="settings">
+                    <form action="" method="POST">
                         @csrf
                         <header class="docs-header">
                             <h1 class="docs-heading">Settings</h1>
@@ -110,7 +110,7 @@
                                 <p>Manage your channels settings here. These settings only affect your channel.</p>
                             </section><!--//docs-intro-->
                         </header>
-                        <section class="docs-section" id="item-3-1">
+                        <section class="docs-section" id="ai-instructions">
                             <h2 class="section-heading">AI instructions</h2>
                             <p>These instructions will be provided to the AI at the start of every chat, so the AI knows what it is supposed to do. You can provide various instructions, in your desired language. You can also provide extra information about your channel, so the AI can use this info for better answers.<br/>A few examples:
                                 <ul>
@@ -126,17 +126,17 @@
                                 <textarea class="form-control" id="start_instructions" name="start_instructions" style="height:100px" maxlength="500">@if( auth()->user()->settings ){{ auth()->user()->settings->start_instructions}}@endif</textarea>
                             </div>
                         </section><!--//section-->
-                        <section class="docs-section" id="item-3-3">
+                        <section class="docs-section" id="conversation-id">
                             <h2 class="section-heading">Conversation ID</h2>
                             <p>Viewers can always continue their own last conversation by starting with a +, for example: <b>!ai + tell me more</b>.<br/>
-                                When enabled, each message also ends with a hashtag and a code, for example #abc. Anyone can use this code to continue that conversation. View examples: <a href="/#item-1-2" target="blank">here</a>.<br/>
+                                When enabled, each message also ends with a hashtag and a code, for example #abc. Anyone can use this code to continue that conversation. View examples: <a href="/#conversations" target="blank">here</a>.<br/>
                                 It's disabled by default, which leaves space for a few extra characters of other info.
                             </p>
                             <div class="form-group">
                                 <input type="checkbox" @if( auth()->user()->settings and auth()->user()->settings->show_conversation_id) checked="checked" @endif name="show_conversation_id" id="show_conversation_id"/> Show conversation ID/hashtag at the end of the message
                             </div>
                         </section><!--//section-->
-                        <section class="docs-section" id="item-3-4">
+                        <section class="docs-section" id="mention-user">
                             <h2 class="section-heading">Mention user</h2>
                             <p>At the start of each message we @mention the user who called the command.<br/>
                             By disabling this setting, the username of the viewer will be removed from the message, freeing up space for a few extra characters of other info.
@@ -145,7 +145,7 @@
                                 <input type="checkbox" @if( auth()->user()->settings and auth()->user()->settings->mention_user) checked="checked" @endif name="mention_user" id="mention_user"/> Mention user at the start of the message
                             </div>
                         </section><!--//section-->
-                        <section class="docs-section" id="item-3-5">
+                        <section class="docs-section" id="sponsor-heart">
                             <h2 class="section-heading">Sponsor heart</h2>
                             <p>Are you a sponsor? Awesome! As appreciation we show a ❤️ emoji in front of your username when you use our app.<br/>
                             Want to become a sponsor, head over to: <a href="https://github.com/sponsors/xgerhard" target="blank">github.com/sponsors/xgerhard</a>.<br/> 
@@ -155,25 +155,25 @@
                                 <input type="checkbox" @if( auth()->user()->settings and auth()->user()->settings->show_sponsor_heart) checked="checked" @endif name="show_sponsor_heart" id="show_sponsor_heart"/> Show sponsor ❤️ emoji
                             </div>
                         </section><!--//section-->
-                        <section class="docs-section" id="item-3-6">
+                        <section class="docs-section" id="save">
                             <h2 class="section-heading">Save settings</h2>
                             <p><button type="submit" id="save_settings" name="save_settings" class="btn btn-primary">Save settings</button><p>
                         </section>
                     </form>
                 </article><!--//docs-article-->
 
-                <article class="docs-article" id="section-4">
+                <article class="docs-article" id="help">
                     <header class="docs-header">
                         <h1 class="docs-heading">Help</h1>
                         <section class="docs-intro">
                             <p></p>
                         </section><!--//docs-intro-->
                     </header>
-                     <section class="docs-section" id="item-4-1">
+                     <section class="docs-section" id="contact">
                         <h2 class="section-heading">Contact</h2>
                         <p>Need help with the installation, any questions, or a thank you, feel free to send me a mail at: <a href="mailto:hi@gerhard.dev" target="blank">hi@gerhard.dev</a>.</p>
                     </section><!--//section-->
-                    <section class="docs-section" id="item-4-2">
+                    <section class="docs-section" id="contribute">
                         <h2 class="section-heading">Contribute</h2>
                         <p>The source code is viewable for everyone, have suggestions, improvements, or just curious? View this app on GitHub: <a href="https://github.com/xgerhard/XGPT" target="blank">GitHub.com/xgerhard/XGPT</a>.</p>
                     </section><!--//section-->
