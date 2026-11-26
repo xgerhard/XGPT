@@ -168,8 +168,13 @@ class CommandTest extends TestCase
         Http::preventStrayRequests();
 
         foreach (['/api/command', '/api/command?q=', '/api/command?q=%2B'] as $url) {
-            $this->assertContains($this->get($url)->assertOk()->getContent(), CommandController::NO_QUESTION_REPLIES);
+            $reply = $this->get($url)->assertOk()->getContent();
+            $this->assertStringStartsWith('xgerhard: ', $reply);
+            $this->assertContains(substr($reply, strlen('xgerhard: ')), CommandController::NO_QUESTION_REPLIES);
         }
+
+        $this->channel()->settings()->update(['mention_user' => 0]);
+        $this->assertContains($this->get('/api/command')->getContent(), CommandController::NO_QUESTION_REPLIES);
 
         $this->assertSame('', trim($this->get('/api/command?q='.urlencode('😂 👍'))->getContent()));
         Http::assertNothingSent();

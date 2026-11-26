@@ -30,12 +30,12 @@ class CommandController extends Controller
 
     public function run(Request $request, BotRequest $bot)
     {
-        if (!$request->has('q') || $request->get('q') == '') {
-            return Arr::random(self::NO_QUESTION_REPLIES);
-        }
-
         try {
             $xgpt = new XGPT($bot);
+
+            if (!$request->has('q') || $request->get('q') == '') {
+                return $xgpt->mention(Arr::random(self::NO_QUESTION_REPLIES));
+            }
 
             $messageParts = explode(' ', $request->get('q'));
             if (str_starts_with($messageParts[0], '#') && strlen($messageParts[0]) == 4) {
@@ -47,7 +47,7 @@ class CommandController extends Controller
             }
 
             if (count($messageParts) == 0) {
-                return Arr::random(self::NO_QUESTION_REPLIES);
+                return $xgpt->mention(Arr::random(self::NO_QUESTION_REPLIES));
             }
 
             $message = implode(' ', $messageParts);

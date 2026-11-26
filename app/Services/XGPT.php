@@ -100,6 +100,16 @@ class XGPT
     }
 
     /**
+     * Puts the viewer's name in front, if the channel mentions viewers
+     */
+    public function mention(string $text): string
+    {
+        $name = $this->settings->mention_user ? $this->viewerName() : null;
+
+        return $name ? $name .': '. $text : $text;
+    }
+
+    /**
      * Sends the message after the response, so it's the second one in chat
      */
     private function sendLater(?string $message): void
