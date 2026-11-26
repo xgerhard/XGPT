@@ -299,6 +299,8 @@ class CommandTest extends TestCase
         $this->get('/')->assertOk();
         $this->get('/dashboard')->assertRedirect('/login');
         $this->assertStringStartsWith('https://api.nightbot.tv/oauth2/authorize', $this->get('/login')->headers->get('Location'));
+        $this->assertStringStartsWith('https://id.twitch.tv/oauth2/authorize', $twitch = $this->get('/login/twitch')->headers->get('Location'));
+        $this->assertStringNotContainsString('user%3Aread%3Aemail', $twitch);
     }
 
     public function test_first_login_creates_the_channel(): void
@@ -312,6 +314,42 @@ class CommandTest extends TestCase
 
         $this->assertAuthenticated();
         $this->assertDatabaseHas('users', ['provider_id' => '1', 'token' => null]);
+    }
+
+    public function test_twitch_login_finds_the_same_channel(): void
+    {
+        $channel = $this->channel();
+        $twitchUser = (new SocialiteUser)->setRaw(['login' => 'xgerhard'])->map(['id' => '49056910', 'name' => 'xgerhard']);
+        Socialite::shouldReceive('driver->user')->andReturn($twitchUser);
+
+        $this->get('/login/twitch/callback')->assertRedirect('/dashboard');
+
+        $this->assertAuthenticatedAs($channel);
+        $this->assertSame(1, User::count());
+    }
+
+    public function test_twitch_login_creates_a_channel(): void
+    {
+        $twitchUser = (new SocialiteUser)->setRaw(['login' => 'newchan'])->map(['id' => '5', 'name' => 'NewChan']);
+        Socialite::shouldReceive('driver->user')->andReturn($twitchUser);
+
+        $this->get('/login/twitch/callback');
+
+        $this->assertDatabaseHas('users', ['provider' => 'twitch', 'provider_id' => '5', 'name' => 'newchan', 'display_name' => 'NewChan']);
+    }
+
+    public function test_dashboard_without_nightbot_shows_the_fossabot_command(): void
+    {
+        Http::preventStrayRequests();
+        $user = $this->channel();
+
+        $this->actingAs($user)->get('/dashboard')->assertOk()
+            ->assertSee('$(customapi https://xgpt.gerhard.dev/api/command?q=$(querystring))', false)
+            ->assertDontSee('Install command');
+
+        $this->post('/dashboard', ['action' => 'install_command', 'command_code' => '!ai'])->assertRedirect('/dashboard');
+        $this->post('/dashboard', ['save_settings' => 1, 'start_instructions' => 'new'])->assertRedirect('/dashboard');
+        $this->assertSame('new', $user->settings()->first()->start_instructions);
     }
 
     public function test_dashboard_shows_an_installed_command(): void

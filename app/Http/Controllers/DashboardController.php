@@ -25,13 +25,12 @@ class DashboardController extends Controller
             $this->setDefaultSettings();
         }
 
-        // Logout if no Nightbot session is found
+        // Signed in with another platform, the command can't be installed for them
         $token = session('nightbot_api_token');
         if (!$token) {
-            return redirect('/logout');
+            return view('dashboard', ['nightbot' => false, 'commands' => []]);
         }
 
-        // $user = Auth::user();
         $nightbotApi = new NightbotAPI;
         $nightbotApi->setAccessToken($token);
         $commands = $nightbotApi->getCustomCommands();
@@ -46,6 +45,7 @@ class DashboardController extends Controller
         }
 
         return view('dashboard', [
+            'nightbot' => true,
             'commands' => $installedCommands
         ]);
     }
@@ -53,9 +53,8 @@ class DashboardController extends Controller
     public function save(Request $request)
     {
         if ($request->has('action')) {
-            $token = session('nightbot_api_token');
-            if (!$token) {
-                return redirect('/logout');
+            if (!session('nightbot_api_token')) {
+                return redirect('/dashboard');
             }
 
             switch ($request->post('action')) {

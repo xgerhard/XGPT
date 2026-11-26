@@ -14,6 +14,7 @@
         "laravel/socialite": "^5.11",
         "laravel/tinker": "^3.0",
         "socialiteproviders/manager": "^4.4",
+        "socialiteproviders/twitch": "^5.4",
         "xgerhard/nbheaders": "^1.0"
     },
     "require-dev": {

@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\NightbotAuthController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Models\Conversation;
 
@@ -21,9 +21,11 @@ Route::get('/', function () {
     return view('home');
 });
 
-Route::get('login/nightbot/callback', [NightbotAuthController::class, 'handleProviderCallback']);
-Route::get('login', [NightbotAuthController::class, 'redirectToProvider'])->name('login');
-Route::get('logout', [NightbotAuthController::class, 'logout']);
+Route::get('login', [AuthController::class, 'redirectToNightbot'])->name('login');
+Route::get('login/nightbot/callback', [AuthController::class, 'handleNightbotCallback']);
+Route::get('login/twitch', [AuthController::class, 'redirectToTwitch']);
+Route::get('login/twitch/callback', [AuthController::class, 'handleTwitchCallback']);
+Route::get('logout', [AuthController::class, 'logout']);
 
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index']);

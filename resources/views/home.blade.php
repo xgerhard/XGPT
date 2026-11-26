@@ -125,8 +125,8 @@
                         <h2 class="section-heading">Nightbot</h2>
                         <p>Nightbot is a chat bot for Twitch, YouTube, and Trovo that allows you to automate your live stream's chat with moderation and new features, allowing you to spend more time entertaining your viewers.</p>
                         <p>Setting up Nightbot is easy, simply sign in at: <a href="https://nightbot.tv/" target="blank">nightbot.tv</a> and click the "Join Channel" button, that's it!</p>
-                        <h5>When will other bots be supported?</h5>
-                        <p>Most likely never. By using Nightbot we can integrate our app easily and provide a one click <a href="#section-3">installation</a> for users.</p>                        
+                        <h5>Which bots are supported?</h5>
+                        <p>Nightbot and Fossabot. With Nightbot we can <a href="#section-3">install</a> the command for you, with Fossabot you add it yourself.</p>                        
                     </section><!--//section-->
                 </article>
                 
@@ -162,7 +162,8 @@
                         <h2 class="section-heading">Automatic</h2>
                         <p>Sign in with Nightbot and we will handle the installation for you!</p>
                         <p>When you sign in to our dashboard you will be able to customize settings for your personal AI chatbot. Give the bot more and detailed instructions for just your stream. Provide attional information about you or your stream, so the bot can answer more specific questions. Want the bot to speak in a certain language, a certain way, include emojis, be more funny? Endless opportunities and alot of fun!</p>
-                        <p><a href="https://xgpt.gerhard.dev/dashboard" class="btn btn-secondary">Sign in with Nightbot</a></p>
+                        <p><a href="https://xgpt.gerhard.dev/login" class="btn btn-secondary">Sign in with Nightbot</a> <a href="https://xgpt.gerhard.dev/login/twitch" class="btn btn-secondary">Sign in with Twitch</a></p>
+                        <p>Use Fossabot? Sign in with Twitch to change your settings, the command you add yourself (see below).</p>
                     </section><!--//section-->
                     
                     <section class="docs-section" id="item-3-2">
@@ -190,7 +191,18 @@
                                 <p><code>$(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring))</code></p>
                             </div><!--//content-->
                         </div><!--//callout-block-->
-                        
+                        <p>Using Fossabot:</p>
+                        <div class="callout-block callout-block-info">
+                            <div class="content">
+                                <h4 class="callout-title">
+                                    <span class="callout-icon-holder me-1">
+                                        <i class="fa fa-info-circle"></i>
+                                    </span><!--//icon-holder-->
+                                    Add a command in your Fossabot dashboard, with this as response:
+                                </h4>
+                                <p><code>$(customapi https://xgpt.gerhard.dev/api/command?q=$(querystring))</code></p>
+                            </div><!--//content-->
+                        </div><!--//callout-block-->
                     </section><!--//section-->
                 </article><!--//docs-article-->
                 
