@@ -43,7 +43,7 @@
                         <li class="list-inline-item"><a href="https://github.com/xgerhard/XGPT" target="blank"><i class="fa fa-github fa-fw"></i></a></li>
                         <li class="list-inline-item"><a href="mailto:hi@gerhard.dev" target="blank"><i class="fa fa-envelope fa-fw"></i></a></li>
                     </ul><!--//social-list-->
-                    <a href="https://xgpt.gerhard.dev/logout" class="btn btn-secondary d-none d-lg-flex">Logout</a>
+                    <a href="/logout" class="btn btn-secondary d-none d-lg-flex">Logout</a>
                 </div><!--//docs-top-utilities-->
             </div><!--//container-->
         </div><!--//branding-->
@@ -101,7 +101,7 @@
                         @if (!$nightbot)
                         <p>Add a command in your Fossabot dashboard, with this as response:</p>
                         <p><code>$(customapi https://xgpt.gerhard.dev/api/command?q=$(querystring))</code></p>
-                        <p>Using Nightbot? <a href="https://xgpt.gerhard.dev/login/nightbot">Sign in with Nightbot</a> and we install the command for you.</p>
+                        <p>Using Nightbot? <a href="/login/nightbot">Sign in with Nightbot</a> and we install the command for you.</p>
                         @elseif (empty($commands))
                         <div class="callout-block callout-block-danger me-1">
                             <div class="content">
@@ -188,7 +188,7 @@
                         </section><!--//section-->
                         <section class="docs-section" id="item-3-3">
                             <h2 class="section-heading">Conversation ID</h2>
-                            <p>When enabled, each message ends with a hashtag and a code, for example #abc. This code can be used to continue a conversation, for example to use earlier info in your next question. View examples: <a href="https://xgpt.gerhard.dev/#item-1-2" target="blank">here</a>.<br/>
+                            <p>When enabled, each message ends with a hashtag and a code, for example #abc. This code can be used to continue a conversation, for example to use earlier info in your next question. View examples: <a href="/#item-1-2" target="blank">here</a>.<br/>
                                 While this feature is convenient, most of the time it's not used. Most users just ask one thing at the time and don't have a full conversations with the bot.<br/>
                                 It's disabled by default, which leaves space for a few extra characters of other info.
                             </p>
