@@ -19,11 +19,11 @@ class OpenAI
     public function ask(array $messages): string
     {
         $response = Http::acceptJson()->timeout(7.5)->withToken(config('services.openai.key'))->post(self::URL, [
-            'model' => 'gpt-5-nano',
+            'model' => 'gpt-6-luna',
             'input' => $messages,
             'max_output_tokens' => 500,
             'reasoning' => [
-                'effort' => 'minimal'
+                'effort' => 'none'
             ]
         ]);
 
