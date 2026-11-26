@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Http\Middleware\EnsureBotRequest;
 use App\Models\Conversation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -102,8 +101,6 @@ class CommandTest extends TestCase
     public function test_plus_only_continues_an_own_recent_conversation(): void
     {
         $this->fakeReply('hello');
-        config(['app.debug' => false]);
-        $this->withoutMiddleware(EnsureBotRequest::class);
         $ask = function ($channel, $user, $q) {
             $id = fn ($id) => "name=a&displayName=a&provider=twitch&providerId=$id";
             $_SERVER['HTTP_NIGHTBOT_CHANNEL'] = $id($channel);
@@ -127,7 +124,6 @@ class CommandTest extends TestCase
             unset($_SERVER['HTTP_NIGHTBOT_CHANNEL'], $_SERVER['HTTP_NIGHTBOT_USER']);
         }
 
-        config(['app.debug' => true]);
         $this->get('/api/command?q='.urlencode('+'))->assertSee('Missing query');
     }
 

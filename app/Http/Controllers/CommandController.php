@@ -5,37 +5,18 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Services\XGPT;
-use xgerhard\nbheaders\NBHeaders;
+use App\Services\Bots\BotRequest;
 
 class CommandController extends Controller
 {
-    public function run(Request $request, NBHeaders $nbheaders)
+    public function run(Request $request, BotRequest $bot)
     {
-        // If APP_DEBUG is set to true in your .env, you can set a test user & channel here, so the script works from the browser.
-        // This will manually set the request headers that are normally send by Nightbot urlFetch: https://docs.nightbot.tv/commands/variables/urlfetch
-        if(config('app.debug'))
-        {
-            $nbheaders->setUser([
-                'name' => 'xgerhard',
-                'displayName' => 'xgerhard',
-                'provider' => 'twitch',
-                'providerId' => '49056910',
-                'userLevel' => 'owner'
-            ]);
-            $nbheaders->setChannel([
-                'name' => 'xgerhard',
-                'displayName' => 'xgerhard',
-                'provider' => 'twitch',
-                'providerId' => '49056910'
-            ]);
-        }
-
         if (!$request->has('q') || $request->get('q') == '') {
             return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
         }
 
         try {
-            $xgpt = new XGPT($nbheaders);
+            $xgpt = new XGPT($bot);
 
             $messageParts = explode(' ', $request->get('q'));
             if (str_starts_with($messageParts[0], '#') && strlen($messageParts[0]) == 4) {

@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Conversation;
 use App\Models\UserSettings;
-use xgerhard\nbheaders\NBHeaders;
+use App\Services\Bots\BotRequest;
 
 /**
  * Answers a viewer's question with the settings of the channel
@@ -16,14 +16,13 @@ class XGPT
     private string $lengthRule;
     private ?Conversation $conversation = null;
 
-    public function __construct(private NBHeaders $nbheaders)
+    public function __construct(private BotRequest $bot)
     {
-        $channel = $nbheaders->getChannel();
         $settingsHandler = new SettingsHandler;
 
-        $this->settings = $settingsHandler->getUserWithSettings($channel->provider, $channel->providerId)->settings;
-        $this->instructions = $this->settings->start_instructions ?: $settingsHandler->getStartInstructions($channel->provider);
-        $this->lengthRule = $settingsHandler->getLengthRule($channel->provider);
+        $this->settings = $settingsHandler->getUserWithSettings($bot->channelProvider, $bot->channelId)->settings;
+        $this->instructions = $this->settings->start_instructions ?: $settingsHandler->getStartInstructions($bot->channelProvider);
+        $this->lengthRule = $settingsHandler->getLengthRule($bot->channelProvider);
     }
 
     /**
@@ -39,7 +38,7 @@ class XGPT
      */
     public function continueLastConversation(): void
     {
-        $viewer = $this->viewerKey();
+        $viewer = $this->bot->viewerKey();
         if ($viewer) {
             $this->conversation = Conversation::lastOf($viewer);
         }
@@ -69,7 +68,7 @@ class XGPT
             $this->conversation = Conversation::start();
         }
 
-        $viewer = $this->viewerKey();
+        $viewer = $this->bot->viewerKey();
         if ($viewer) {
             $this->conversation->rememberFor($viewer);
         }
@@ -93,10 +92,10 @@ class XGPT
     {
         return new ChatMessage(
             $answer,
-            $this->nbheaders->getProvider() == 'youtube' ? 199 : 399,
+            $this->bot->platform() == 'youtube' ? 199 : 399,
             $this->settings->mention_user ? $this->viewerName() : null,
             $this->settings->show_conversation_id ? $this->conversation->id : null,
-            $this->nbheaders->getResponseUrl() !== null
+            $this->bot->responseUrl !== null
         );
     }
 
@@ -106,7 +105,7 @@ class XGPT
     private function sendLater(?string $message): void
     {
         if ($message) {
-            $url = $this->nbheaders->getResponseUrl();
+            $url = $this->bot->responseUrl;
             defer(fn () => (new NightbotAPI)->sendMessageByResponseUrl($url, $message));
         }
     }
@@ -116,24 +115,12 @@ class XGPT
      */
     private function viewerName(): ?string
     {
-        $user = $this->nbheaders->getUser();
-        if (!$user) {
+        if (!$this->bot->hasUser()) {
             return null;
         }
 
-        $badge = Badges::getBadge($user->provider, $user->providerId);
+        $badge = Badges::getBadge($this->bot->userProvider, $this->bot->userId);
 
-        return $badge ? '['. $badge .'] '. $user->displayName : $user->displayName;
-    }
-
-    /**
-     * Identifies the viewer within the channel, null on timers
-     */
-    private function viewerKey(): ?string
-    {
-        $user = $this->nbheaders->getUser();
-        $channel = $this->nbheaders->getChannel();
-
-        return $user ? implode(':', [$channel->provider, $channel->providerId, $user->provider, $user->providerId]) : null;
+        return $badge ? '['. $badge .'] '. $this->bot->userName : $this->bot->userName;
     }
 }
