@@ -5,12 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
     protected $with = ['settings'];
 
@@ -19,8 +18,7 @@ class User extends Authenticatable
         'display_name',
         'provider',
         'provider_id',
-        'sponsor',
-        'token'
+        'sponsor'
     ];
 
     public function settings(): HasOne

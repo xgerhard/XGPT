@@ -3,52 +3,51 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\src\XGPT;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
+use App\Services\XGPT;
+use App\Services\Bots\BotRequest;
 
 class CommandController extends Controller
 {
-    public function run(Request $request)
+    // Without a question, kept light since it can be the first thing a viewer sees from the bot
+    public const NO_QUESTION_REPLIES = [
+        'How can I help you today?',
+        "Hey, what's up? Ask me something!",
+        "Bleep bloop, I'm here. What do you need?",
+        "I'm listening. Go ahead, ask away.",
+        "Ready when you are. What's the question?",
+        'Beep. Awaiting input. Try asking me something!',
+        "Didn't catch a question there, try again?",
+        'Give me something to work with! Ask me anything.',
+        'Booting up... now ask me something.',
+        'You rang? What can I do for you?',
+        '*robot noises* Go on, ask your question.',
+        "I've got answers, you've got to ask a question first.",
+        "Say the word and I'll do my best to help.",
+        "Still here, still listening. What's on your mind?",
+    ];
+
+    public function run(Request $request, BotRequest $bot)
     {
-        $nbheaders = new \xgerhard\nbheaders\nbheaders;
-
-        // If APP_DEBUG is set to true in your .env, you can set a test user & channel here, so the script works from the browser.
-        // This will manually set the request headers that are normally send by Nightbot urlFetch: https://docs.nightbot.tv/commands/variables/urlfetch
-        if(env('APP_DEBUG'))
-        {
-            $nbheaders->setUser([
-                'name' => 'xgerhard',
-                'displayName' => 'xgerhard',
-                'provider' => 'twitch',
-                'providerId' => '49056910',
-                'userLevel' => 'owner'
-            ]);
-            $nbheaders->setChannel([
-                'name' => 'xgerhard',
-                'displayName' => 'xgerhard',
-                'provider' => 'twitch',
-                'providerId' => '49056910'
-            ]);
-        }
-
-        if (!$nbheaders->isNightbotRequest()) {
-            return 'Only Nightbot requests allowed.';
-        }
-
-        if (!$request->has('q') || $request->get('q') == '') {
-            return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
-        }
-
         try {
-            $XGPT = new XGPT($nbheaders);
+            $xgpt = new XGPT($bot);
+
+            if (!$request->has('q') || $request->get('q') == '') {
+                return $xgpt->mention(Arr::random(self::NO_QUESTION_REPLIES));
+            }
 
             $messageParts = explode(' ', $request->get('q'));
             if (str_starts_with($messageParts[0], '#') && strlen($messageParts[0]) == 4) {
-                $XGPT->setConversionId(substr($messageParts[0], 1));
+                $xgpt->continueConversation(substr($messageParts[0], 1));
+                unset($messageParts[0]);
+            } elseif ($messageParts[0] == '+') {
+                $xgpt->continueLastConversation();
                 unset($messageParts[0]);
             }
 
             if (count($messageParts) == 0) {
-                return 'Missing query, please ask a question? Check https://community.nightdev.com/t/custom-api-chatgpt-chat-with-your-friend-nightbot/34092 for help.';
+                return $xgpt->mention(Arr::random(self::NO_QUESTION_REPLIES));
             }
 
             $message = implode(' ', $messageParts);
@@ -57,19 +56,15 @@ class CommandController extends Controller
                 return ' ';
             }
 
-            $XGPT->setMessage($message);
-            return $XGPT->getResponse();
-
-        } catch (\App\Exceptions\InvalidTokenException $e) {
-            return 'Error: XGPT token is missing or doesn\'t match. Please visit https://xgpt.gerhard.dev/dashboard to resolve this issue.';
+            return $xgpt->reply($message);
         } catch (\App\Exceptions\RateLimitException $e) {
-            return 'Error: XGPT has reached it monthly usage limit. Support this project: https://github.com/sponsors/xgerhard ❤️';
-        } catch (\App\Exceptions\InvalidApiKeyException $e) {
-            return 'Error: Incorrect API key provided in your XGPT settings. You can find your API key at https://platform.openai.com/account/api-keys';
-        } catch (\Illuminate\Http\Client\ConnectionException) {
-            return 'Error: ChatGPT took to long to respond. Please try again in a bit. ResidentSleeper';
-        } catch (\Exception $e) {
-            return 'Error: Unknown error occured, please contact xgerhard';
+            return 'Error: XGPT has reached its monthly usage limit. Support this project: https://github.com/sponsors/xgerhard ❤️';
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::warning($e->getMessage());
+            return 'Error: The AI took too long to respond. Please try again in a bit.';
+        } catch (\Throwable $e) {
+            report($e);
+            return 'Error: Unknown error occurred, please contact xgerhard';
         }
     }
 
