@@ -28,16 +28,25 @@ class CommandController extends Controller
         "Still here, still listening. What's on your mind?",
     ];
 
+    /**
+     * A length instruction some channels still append to the query in their command, like "answer in 150
+     * characters or less" (also the "150% 20characters" form a doubled "%%20" decodes to) or "keep all
+     * replies under 150 characters". It conflicts with the length rule XGPT sends itself.
+     */
+    private const LENGTH_INSTRUCTION = '/\s*(?:answer\s+in\s+\d+\s*%?\s*(?:20)?char(?:acter)?s?\s+or\s+(?:less?|fewer)'
+        .'|keep\s+(?:all\s+)?(?:replies|answers|responses)\s+under\s+\d+\s*char(?:acter)?s?)\s*[.!]?\s*$/i';
+
     public function run(Request $request, BotRequest $bot)
     {
         try {
             $xgpt = new XGPT($bot);
+            $query = trim(mb_substr(preg_replace(self::LENGTH_INSTRUCTION, '', (string) $request->get('q', '')), 0, 500));
 
-            if (!$request->has('q') || $request->get('q') == '') {
+            if ($query == '') {
                 return $xgpt->mention(Arr::random(self::NO_QUESTION_REPLIES));
             }
 
-            $messageParts = explode(' ', $request->get('q'));
+            $messageParts = explode(' ', $query);
             if (str_starts_with($messageParts[0], '#') && strlen($messageParts[0]) == 4) {
                 $xgpt->continueConversation(substr($messageParts[0], 1));
                 unset($messageParts[0]);

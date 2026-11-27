@@ -163,6 +163,49 @@ class CommandTest extends TestCase
         $this->assertDatabaseHas('conversation_messages', ['content' => '+5 +3']);
     }
 
+    public function test_strips_a_length_instruction_appended_by_the_command(): void
+    {
+        $this->fakeReply('a reply');
+        $queries = [
+            'what%20is%20a%20cat%20answer%20in%20150%20characters%20or%20less',
+            'what%20is%20a%20cat%20answer%20in%20150%%2020characters%20or%20less',
+            'what%20is%20a%20cat%20answer%20in%20150%%2020characters%20or%20les',
+            'what%20is%20a%20cat%20Answer%20in%20200%20characters%20or%20less.',
+            'what%20is%20a%20cat%20keep%20all%20replies%20under%20150%20characters.',
+        ];
+
+        foreach ($queries as $query) {
+            $this->get("/api/command?q=$query");
+            $this->assertDatabaseHas('conversation_messages', ['role' => 'user', 'content' => 'what is a cat']);
+            Conversation::query()->delete();
+        }
+    }
+
+    public function test_keeps_a_length_request_that_is_part_of_the_question(): void
+    {
+        $this->fakeReply('a reply');
+        $this->get('/api/command?q='.urlencode('can you answer in 150 characters or less about cats'));
+
+        $this->assertDatabaseHas('conversation_messages', ['content' => 'can you answer in 150 characters or less about cats']);
+    }
+
+    public function test_question_is_cut_at_500_characters(): void
+    {
+        $this->fakeReply('a reply');
+        $this->get('/api/command?q='.urlencode(str_repeat('é', 600)));
+
+        $this->assertDatabaseHas('conversation_messages', ['role' => 'user', 'content' => str_repeat('é', 500)]);
+    }
+
+    public function test_only_a_length_instruction_counts_as_no_question(): void
+    {
+        Http::preventStrayRequests();
+        $reply = $this->get('/api/command?q='.urlencode('answer in 150 characters or less'))->getContent();
+
+        $this->assertContains(substr($reply, strlen('@xgerhard: ')), CommandController::NO_QUESTION_REPLIES);
+        Http::assertNothingSent();
+    }
+
     public function test_without_a_question_replies_without_asking_the_ai(): void
     {
         Http::preventStrayRequests();
