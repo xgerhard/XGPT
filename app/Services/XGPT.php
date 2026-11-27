@@ -116,7 +116,10 @@ class XGPT
     {
         if ($message) {
             $url = $this->bot->responseUrl;
-            defer(fn () => (new NightbotAPI)->sendMessageByResponseUrl($url, $message));
+            defer(function () use ($url, $message) {
+                usleep(300000); // without this, the second message can show up before the answer in chat
+                (new NightbotAPI)->sendMessageByResponseUrl($url, $message);
+            });
         }
     }
 

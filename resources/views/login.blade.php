@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/app.css">
+    @include('partials.analytics')
     <style>
         .signin { max-width: 340px; margin: 12vh auto 0; padding: 0 1rem; text-align: center; }
         .signin .logo { padding: 0 0 .5rem; font-size: 2rem; }
