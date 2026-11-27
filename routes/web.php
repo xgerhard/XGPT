@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SettingsController;
 use App\Models\Conversation;
 
 /*
@@ -21,6 +21,9 @@ Route::get('/', function () {
     return view('home');
 });
 
+Route::view('install', 'install');
+Route::view('pricing', 'pricing');
+Route::view('contact', 'contact');
 Route::view('login', 'login')->name('login');
 Route::get('login/nightbot', [AuthController::class, 'redirectToNightbot']);
 Route::get('login/nightbot/callback', [AuthController::class, 'handleNightbotCallback']);
@@ -29,9 +32,10 @@ Route::get('login/{platform}/callback', [AuthController::class, 'handlePlatformC
 Route::get('logout', [AuthController::class, 'logout']);
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('dashboard', [DashboardController::class, 'index']);
-    Route::post('dashboard', [DashboardController::class, 'save']);
+    Route::get('settings', [SettingsController::class, 'index']);
+    Route::post('settings', [SettingsController::class, 'save']);
 });
+Route::redirect('dashboard', 'settings');
 
 Route::get('/clean', function () {
     Conversation::where('created_at', '<', now()->subDay())->delete();

@@ -30,7 +30,7 @@ class AuthController extends Controller
 
         $this->login($nightbotUser['provider'], $nightbotUser['providerId'], $nightbotUser['name'], $nightbotUser['displayName']);
 
-        return redirect('/dashboard');
+        return redirect('/settings');
     }
 
     public function redirectToPlatform(string $platform)
@@ -44,7 +44,7 @@ class AuthController extends Controller
 
         $this->login($platform, $platformUser->getId(), $platformUser['login'] ?? $platformUser->getNickname(), $platformUser->getName());
 
-        return redirect('/dashboard');
+        return redirect('/settings');
     }
 
     public function logout(Request $request): RedirectResponse

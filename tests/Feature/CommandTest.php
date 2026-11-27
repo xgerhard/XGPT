@@ -203,7 +203,7 @@ class CommandTest extends TestCase
     public function test_saved_prompt_is_at_most_500_characters(): void
     {
         $user = $this->channel();
-        $save = fn ($text) => $this->actingAs($user)->post('/dashboard', ['save_settings' => 1, 'start_instructions' => $text]);
+        $save = fn ($text) => $this->actingAs($user)->post('/settings', ['save_settings' => 1, 'start_instructions' => $text]);
 
         $save(str_repeat('न', 600));
         $this->assertSame(str_repeat('न', 500), $user->settings()->first()->start_instructions);
@@ -234,7 +234,7 @@ class CommandTest extends TestCase
         $user->update(['sponsor' => 1]);
         $user->settings()->update(['api_key' => 'old-encrypted-key']);
 
-        $this->actingAs($user)->post('/dashboard', ['save_settings' => 1, 'api_key' => 'x', 'mention_user' => 'on'])->assertRedirect('/dashboard');
+        $this->actingAs($user)->post('/settings', ['save_settings' => 1, 'api_key' => 'x', 'mention_user' => 'on'])->assertRedirect('/settings');
 
         $this->assertDatabaseHas('users', ['id' => $user->id, 'sponsor' => 1]);
         $this->assertDatabaseHas('user_settings', ['user_id' => $user->id, 'api_key' => 'old-encrypted-key']);
@@ -289,7 +289,7 @@ class CommandTest extends TestCase
     public function test_pages_and_auth_redirect(): void
     {
         $this->get('/')->assertOk();
-        $this->get('/dashboard')->assertRedirect('/login');
+        $this->get('/settings')->assertRedirect('/login');
         $this->get('/login')->assertOk()->assertSee(['/login/nightbot', '/login/twitch', '/login/kick']);
         $this->assertStringStartsWith('https://api.nightbot.tv/oauth2/authorize', $this->get('/login/nightbot')->headers->get('Location'));
         $this->assertStringStartsWith('https://id.twitch.tv/oauth2/authorize', $twitch = $this->get('/login/twitch')->headers->get('Location'));
@@ -307,7 +307,7 @@ class CommandTest extends TestCase
         ]);
         Socialite::shouldReceive('driver->user')->andReturn($nightbotUser);
 
-        $this->get('/login/nightbot/callback')->assertRedirect('/dashboard');
+        $this->get('/login/nightbot/callback')->assertRedirect('/settings');
 
         $this->assertAuthenticated();
         $this->assertDatabaseHas('users', ['provider_id' => '1', 'token' => null]);
@@ -319,7 +319,7 @@ class CommandTest extends TestCase
         $twitchUser = (new SocialiteUser)->setRaw(['login' => 'xgerhard'])->map(['id' => '49056910', 'name' => 'xgerhard']);
         Socialite::shouldReceive('driver->user')->andReturn($twitchUser);
 
-        $this->get('/login/twitch/callback')->assertRedirect('/dashboard');
+        $this->get('/login/twitch/callback')->assertRedirect('/settings');
 
         $this->assertAuthenticatedAs($channel);
         $this->assertSame(1, User::count());
@@ -340,29 +340,30 @@ class CommandTest extends TestCase
         $kickUser = (new SocialiteUser)->setRaw(['name' => 'kickchan'])->map(['id' => '7', 'nickname' => 'kickchan', 'name' => 'kickchan']);
         Socialite::shouldReceive('driver->user')->andReturn($kickUser);
 
-        $this->get('/login/kick/callback')->assertRedirect('/dashboard');
+        $this->get('/login/kick/callback')->assertRedirect('/settings');
 
         $this->assertDatabaseHas('users', ['provider' => 'kick', 'provider_id' => '7', 'name' => 'kickchan']);
     }
 
-    public function test_dashboard_shows_both_commands_to_copy(): void
+    public function test_install_shows_both_commands_and_settings_saves_settings(): void
     {
         Http::preventStrayRequests();
         $user = $this->channel();
 
-        $this->actingAs($user)->get('/dashboard')->assertOk()
+        $this->actingAs($user)->get('/settings')->assertOk();
+        $this->get('/install')->assertOk()
             ->assertSee('!commands add !ai -cd=5 $(urlfetch https://xgpt.gerhard.dev/api/command?q=$(querystring))', false)
             ->assertSee('!addcmd -u 5 ai $(customapi https://xgpt.gerhard.dev/api/command?q=$(querystring))', false);
 
-        $this->post('/dashboard', ['save_settings' => 1, 'start_instructions' => 'new'])->assertRedirect('/dashboard');
+        $this->post('/settings', ['save_settings' => 1, 'start_instructions' => 'new'])->assertRedirect('/settings');
         $this->assertSame('new', $user->settings()->first()->start_instructions);
     }
-    public function test_dashboard_loads_and_saves_settings(): void
+    public function test_settings_loads_and_saves_settings(): void
     {
         $user = $this->channel();
 
-        $this->actingAs($user)->get('/dashboard')->assertOk();
-        $this->post('/dashboard', ['save_settings' => 1, 'start_instructions' => 's'])->assertRedirect('/dashboard');
+        $this->actingAs($user)->get('/settings')->assertOk();
+        $this->post('/settings', ['save_settings' => 1, 'start_instructions' => 's'])->assertRedirect('/settings');
         $this->assertSame('s', $user->fresh()->settings->start_instructions);
     }
 }
