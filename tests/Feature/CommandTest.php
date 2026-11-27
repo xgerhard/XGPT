@@ -287,7 +287,7 @@ class CommandTest extends TestCase
     {
         Http::fake(['*' => Http::response(['error' => ['type' => 'insufficient_quota']], 429)]);
 
-        $this->get('/api/command?q=hi')->assertOk()->assertSee('monthly usage limit');
+        $this->get('/api/command?q=hi')->assertOk()->assertSee('ran out of budget');
     }
 
     public function test_other_openai_errors_are_chat_text_and_logged(): void

@@ -67,7 +67,7 @@ class CommandController extends Controller
 
             return $xgpt->reply($message);
         } catch (\App\Exceptions\RateLimitException $e) {
-            return 'Error: XGPT has reached its monthly usage limit. Support this project: https://github.com/sponsors/xgerhard ❤️';
+            return 'XGPT ran out of budget for this month. Help keep it running: https://xgpt.gerhard.dev/pricing';
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             Log::warning($e->getMessage());
             return 'Error: The AI took too long to respond. Please try again in a bit.';

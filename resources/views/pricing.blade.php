@@ -17,7 +17,7 @@
     <p>There's a monthly budget. Once it's used up, XGPT stops answering in <b>every</b> channel until the next month. Viewers then get this instead:</p>
     <div class="chat">
         <p><span class="viewer">viewer</span>!ai what should I name my cat?</p>
-        <p><span class="bot">Bot</span>Error: XGPT has reached its monthly usage limit. Support this project: https://github.com/sponsors/xgerhard ❤️</p>
+        <p><span class="bot">Bot</span>XGPT ran out of budget for this month. Help keep it running: https://xgpt.gerhard.dev/pricing</p>
     </div>
 
     <h2>Sponsors</h2>
