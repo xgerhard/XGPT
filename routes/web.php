@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SettingsController;
-use App\Models\Conversation;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,8 +35,3 @@ Route::middleware(['auth'])->group(function () {
     Route::post('settings', [SettingsController::class, 'save']);
 });
 Route::redirect('dashboard', 'settings');
-
-Route::get('/clean', function () {
-    Conversation::where('created_at', '<', now()->subDay())->delete();
-    echo ':)';
-});
